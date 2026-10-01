@@ -146,18 +146,20 @@ func TestGetMetadataEndToEnd(t *testing.T) {
 	// 10, rt_critic and rt_audience out of 100). The fixture has no Rotten
 	// Tomatoes audience score, so that key must be absent rather than zero.
 	// "sources" carries the same ratings on a 0-100 scale, plus MDBList's own
-	// score, for hosts that store them. The fixture also rates Metacritic,
-	// Trakt, Letterboxd and Roger Ebert; the plugin does not offer those, so
-	// they must not appear.
+	// score and every other rating the fixture has except Trakt's, for hosts
+	// that store them. Trakt's must not appear.
 	wantRatings := map[string]any{
 		"imdb":      8.1,
 		"tmdb":      7.6,
 		"rt_critic": float64(97),
 		"sources": map[string]any{
-			"imdb":      map[string]any{"score": float64(81), "votes": float64(673852)},
-			"tmdb":      map[string]any{"score": float64(76), "votes": float64(10114)},
-			"rt_critic": map[string]any{"score": float64(97), "votes": float64(102)},
-			"mdblist":   map[string]any{"score": float64(86)},
+			"imdb":       map[string]any{"score": float64(81), "votes": float64(673852)},
+			"tmdb":       map[string]any{"score": float64(76), "votes": float64(10114)},
+			"rt_critic":  map[string]any{"score": float64(97), "votes": float64(102)},
+			"letterboxd": map[string]any{"score": float64(80), "votes": float64(876082)},
+			"metacritic": map[string]any{"score": float64(87), "votes": float64(21)},
+			"rogerebert": map[string]any{"score": float64(100)},
+			"mdblist":    map[string]any{"score": float64(86)},
 		},
 	}
 	if got := item.GetRatings().AsMap(); !reflect.DeepEqual(got, wantRatings) {
@@ -809,6 +811,17 @@ func TestManifestContract(t *testing.T) {
 	ratingSources, ok := capabilityMetadata["rating_sources"].([]any)
 	if !ok {
 		t.Fatalf("capability metadata has no rating_sources list: %v", capabilityMetadata)
+	}
+	// Silo keeps at most eight declarations per capability and silently drops
+	// the rest, which would drop that source's scores too.
+	if len(ratingSources) > 8 {
+		t.Fatalf("rating_sources has %d entries, want at most 8", len(ratingSources))
+	}
+	// Letterboxd comes first, so among this plugin's sources it gets the title
+	// page's one slot beyond IMDb and TMDB. (Silo's built-in NFO provider
+	// declares Rotten Tomatoes ahead of every plugin.)
+	if first, _ := ratingSources[0].(map[string]any); first["id"] != metadata.RatingSourceLetterboxd {
+		t.Fatalf("first rating_sources entry = %v, want letterboxd", first["id"])
 	}
 	var declaredIDs []string
 	for _, raw := range ratingSources {

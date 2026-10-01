@@ -1,22 +1,63 @@
-# Silo MDBList plugin
+# Silo MDBList plugin (unofficial Letterboxd build)
 
-Fills in what other metadata providers leave empty: IMDb and TMDB ratings, the
-Rotten Tomatoes critic and audience scores, MDBList's own score, the release
-certification, the Common Sense Media minimum age, and basic facts such as
-year, release date, runtime, language, genres, and show status.
+This is an unofficial fork of
+[Silo-Server/silo-plugin-metadata-mdblist](https://github.com/Silo-Server/silo-plugin-metadata-mdblist),
+based on its 0.5.0
+([Silo-Server/silo-plugin-metadata-mdblist#4](https://github.com/Silo-Server/silo-plugin-metadata-mdblist/pull/4)).
+It is not affiliated with Silo, MDBList or any rating service. The plugin
+fetches ratings with your own MDBList API key; the rating services' terms
+apply to how you use them.
 
-Silo shows the Rotten Tomatoes scores and the MDBList score only after an
-administrator turns them on under Settings > Library & Metadata > Ratings.
+Like the official plugin, it fills in what other metadata providers leave
+empty: ratings, the release certification, the Common Sense Media minimum
+age, and basic facts such as year, release date, runtime, language, genres,
+and show status.
 
-MDBList also aggregates Metacritic, Letterboxd, Trakt, Roger Ebert and
-MyAnimeList ratings. The plugin does not pass those on: their owners' terms
-restrict redistribution, and Trakt has blocked MDBList's API access.
+## What this fork changes
 
-Upgrading from 0.4 or earlier: the plugin stops refreshing those scores but
-cannot delete the ones Silo already stored. A Silo server that reads
-`rating_sources` hides them, because this plugin no longer declares them. An
-older server keeps showing the last stored scores until they are removed on
-the server.
+- **Stores every rating MDBList has except Trakt's.** Besides IMDb, TMDB,
+  Rotten Tomatoes critics and audience and MDBList's own score, which the
+  official 0.5.0 keeps, it keeps Letterboxd, Metacritic critics and users,
+  Roger Ebert and MyAnimeList, which the official plugin drops. Trakt's rating
+  stays out: Trakt has blocked MDBList's API access, so MDBList's figure is
+  stale or missing, and Silo keeps at most eight declared rating sources per
+  capability, which these fill.
+- **Shows Letterboxd on title pages.** With Letterboxd turned on, a title
+  page lists IMDb, TMDB and Letterboxd (shown out of 5, like
+  `Letterboxd 4.0`), each only when the title has that score. Turn on **only
+  Letterboxd**: the other ratings are stored but stay hidden while they are
+  off. A title page shows at most three ratings, in the order sources are
+  declared. Letterboxd is this plugin's first declaration, but Silo's built-in
+  NFO provider declares Rotten Tomatoes ahead of every plugin, so turning on
+  Rotten Tomatoes as well gives the third slot to Rotten Tomatoes whenever a
+  title has that score.
+- **Logos in the web app.** `extras/silo-rating-logos.css` replaces the IMDb
+  and Letterboxd text marks with their official logos (see
+  [Rating logos](#rating-logos)).
+- **Its own version and links.** It keeps the official plugin ID
+  (`silo.mdblist`), so it replaces the official plugin when installed; its
+  version ends in `-letterboxd`, and its source and support links point to
+  this fork. It has no release workflow: you build it and upload it yourself.
+
+## Requirements
+
+Showing Letterboxd needs a Silo server with plugin-declared rating sources,
+merged into Silo's `main` on 2026-10-01 (in the `latest` Docker image built
+from it):
+
+- [Silo-Server/silo-server#1697](https://github.com/Silo-Server/silo-server/pull/1697)
+  gives title pages one list of ratings, IMDb and TMDB plus the sources an
+  administrator turns on;
+- [Silo-Server/silo-server#1698](https://github.com/Silo-Server/silo-server/pull/1698)
+  lets metadata plugins declare their rating sources and adds the switches
+  under Settings > Library & Metadata > Ratings.
+
+On a Silo server without them, the plugin installs and fills the same fields,
+and Silo stores these per-source ratings from its own fixed list of sources.
+Clients show what they show today (IMDb, and Rotten Tomatoes from its flat
+columns on the web and in poster badges) but none of the other ratings; there
+are no Ratings switches, and the logo CSS matches nothing. Nothing breaks, and
+the ratings are already stored when the server is updated.
 
 ## Why it has to sit below a primary provider
 
@@ -42,7 +83,7 @@ does not guess, and it does not fall back to searching.
 | `ratings[source=tmdb]` | `rating_tmdb` (0-10) |
 | `ratings[source=tomatoes]` | `rating_rt_critic` (0-100) |
 | `ratings[source=popcorn\|tomatoesaudience\|audience]` | `rating_rt_audience` (0-100) |
-| the four sources above, plus the top-level `score` | `ratings.sources` (0-100 with vote counts; see below) |
+| every source above plus Letterboxd, Metacritic, Roger Ebert and MyAnimeList, and the top-level `score` | `ratings.sources` (0-100 with vote counts; see below) |
 | `certification` | content rating |
 | `age_rating` + `commonsense` | `advisory_age` / `advisory_source` |
 | `year` | year |
@@ -71,7 +112,8 @@ MDBList's `ids` object is read only to match batch answers to requests.
 
 MDBList reports each rating twice: `value` on the source's own scale and
 `score` normalised to 0-100. The scales are not uniform — IMDb's `value` is out
-of 10, TMDB's and Rotten Tomatoes' are out of 100 — so `score` is the input
+of 10, TMDB's, Rotten Tomatoes' and Metacritic's are out of 100, Letterboxd's
+is doubled to 10 and Roger Ebert's is out of 4 stars — so `score` is the input
 wherever it is present, and the per-source conversion is pinned to
 `provider/testdata/movie_jaws.json`.
 
@@ -83,24 +125,32 @@ Alongside the four flat keys, the ratings Struct carries a `sources` object:
 {
   "imdb": 8.1, "tmdb": 7.6, "rt_critic": 97,
   "sources": {
-    "imdb":      {"score": 81, "votes": 673852},
-    "tmdb":      {"score": 76, "votes": 10114},
-    "rt_critic": {"score": 97, "votes": 102},
-    "mdblist":   {"score": 86}
+    "imdb":       {"score": 81, "votes": 673852},
+    "tmdb":       {"score": 76, "votes": 10114},
+    "rt_critic":  {"score": 97, "votes": 102},
+    "letterboxd": {"score": 80, "votes": 876082},
+    "metacritic": {"score": 87, "votes": 21},
+    "rogerebert": {"score": 100},
+    "mdblist":    {"score": 86}
   }
 }
 ```
 
-Keys are `imdb`, `tmdb`, `rt_critic`, `rt_audience`, and `mdblist`. Every
-`score` is 0-100; `votes` is omitted when MDBList has no count. Silo servers
+Keys are `imdb`, `tmdb`, `letterboxd`, `rt_critic`, `rt_audience`,
+`metacritic`, `metacritic_user`, `rogerebert`, `myanimelist` and `mdblist`.
+Every `score` is 0-100; `votes` is omitted when MDBList has no count. Silo servers
 that predate per-source storage read only number-valued keys and skip
 `sources`, so the plugin sends it to every server version.
 
-Silo names IMDb and TMDB itself. It keeps any other key only if the capability
-declares it, so the manifest lists the other three under
-`capabilities[0].metadata.rating_sources`, each with the short name clients
-show beside the score (`RT`, `RT Audience`, `MDBList`), a longer label, and its
-scale. A server that predates `rating_sources` ignores the declaration.
+With Silo-Server/silo-server#1698, Silo names IMDb and TMDB itself and keeps
+any other key only if the capability declares it, so the manifest lists the
+other eight under `capabilities[0].metadata.rating_sources`, Letterboxd first,
+each with the short name clients show beside the score, a label, and its scale
+(Letterboxd 5, so a stored 80 shows as `4.0`; Roger Ebert 4; Metacritic users
+and MyAnimeList 10; the rest 100). Eight is the most Silo keeps per
+capability. A server that predates `rating_sources` ignores the declaration
+and keeps the keys it knows from its own fixed list, which includes all of
+these.
 
 The Common Sense age has no typed field in the plugin API, so it rides in the
 free-form metadata map under `advisory_age` and `advisory_source`, which the
@@ -131,11 +181,35 @@ be told apart from unrated; fixing it needs nullable rating fields host side.
 ## Setup
 
 1. Create an API key in your [MDBList](https://mdblist.com) preferences.
-2. Install the plugin and paste the key into its settings.
-3. Add **MDBList** to a library's metadata provider chain at a *lower* priority
-   than the primary provider.
+2. Build the plugin (`make build-all`) and upload `dist/plugin-linux-amd64`
+   (or `-arm64`) under Silo's plugin admin. If the official MDBList plugin or
+   another plugin with the ID `silo.mdblist` is installed, this one replaces
+   it.
+3. Paste the key into the plugin's settings. Without a key the plugin stays
+   idle and contributes nothing.
+4. Check that **MDBList** sits in each movie and series library's metadata
+   provider chain *below* the primary provider. Silo usually adds it there on
+   install from the manifest's default priority.
+5. Turn on **Letterboxd**, and only Letterboxd, under Settings > Library &
+   Metadata > Ratings (needs the Silo changes under
+   [Requirements](#requirements)).
+6. Run **Bulk Metadata Enrichment** under the admin's scheduled tasks, or wait
+   for its hourly run, to look up the titles already in your libraries.
 
-Without a key the plugin stays idle and contributes nothing.
+## Rating logos
+
+`extras/silo-rating-logos.css` goes into Admin > Appearance > custom CSS. Silo
+stores it in the database, so it survives Silo updates. It replaces the IMDb
+and Letterboxd text marks with their official logos, as tall as TMDB's logo,
+on title pages, the home hero, the Watch Tonight card and the Watch Together
+picker. The logos are embedded in the file, so no request leaves the page;
+the source files are in `extras/logos` and are their owners' trademarks.
+
+Silo's markup does not name a rating's source, so the CSS goes by position. It
+is right only while Letterboxd is the one rating turned on beyond IMDb and
+TMDB: any other source you turn on gets the Letterboxd logo. A lone text mark
+that could be either keeps its text, and if Silo changes its markup the rules
+stop matching and the text shows again.
 
 ## Rate limits, batching and failure behavior
 
@@ -182,3 +256,21 @@ does not log a missing key: it simply stays idle until one is saved.
 make build        # host platform
 make build-all    # linux/amd64, linux/arm64, darwin/arm64
 ```
+
+The build takes its version from `manifest.json` (for example
+`0.5.0-letterboxd`), so Silo's plugin admin shows which build is installed.
+
+## Keeping up with the official plugin
+
+This fork is the official plugin plus two commits: the plugin changes and the
+logo CSS. With the official repository as the `upstream` remote, move them
+onto a new official version with a rebase, run the tests, set the version to
+the official one plus `-letterboxd`, and push:
+
+```sh
+git fetch upstream
+git rebase upstream/main
+go test ./...
+git push --force-with-lease origin main
+```
+

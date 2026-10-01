@@ -30,8 +30,8 @@ func TestAudienceSourceSpellings(t *testing.T) {
 }
 
 // TestRatingSourcesPinnedToJawsFixture fixes the common 0-100 scale per source
-// against the captured response. The fixture also rates Metacritic, Trakt,
-// Letterboxd and Roger Ebert, so the exact match proves those are dropped.
+// against the captured response. The fixture also rates Trakt, so the exact
+// match proves that one is dropped.
 func TestRatingSourcesPinnedToJawsFixture(t *testing.T) {
 	t.Parallel()
 
@@ -41,6 +41,12 @@ func TestRatingSourcesPinnedToJawsFixture(t *testing.T) {
 		metadata.RatingSourceIMDB:     {Score: 81, Votes: 673852},
 		metadata.RatingSourceRTCritic: {Score: 97, Votes: 102},
 		metadata.RatingSourceTMDB:     {Score: 76, Votes: 10114},
+		// Letterboxd's 4.0 stars, which MDBList reports as value 8 of 10.
+		metadata.RatingSourceLetterboxd: {Score: 80, Votes: 876082},
+		metadata.RatingSourceMetacritic: {Score: 87, Votes: 21},
+		// Roger Ebert's 4 of 4 stars; the fixture has no score, so the
+		// pinned scale converts the value.
+		metadata.RatingSourceRogerEbert: {Score: 100},
 		// The response's top-level aggregate.
 		metadata.RatingSourceMDBList: {Score: 86},
 	}
@@ -66,12 +72,16 @@ func TestRatingSourcesConversionRules(t *testing.T) {
 			want:    nil,
 		},
 		{
-			name:    "a pinned scale converts a value without a score",
-			ratings: `[{"source":"tomatoes","value":91,"score":null},{"source":"tmdb","value":72},{"source":"imdb","value":6.4}]`,
+			name: "a pinned scale converts a value without a score",
+			ratings: `[{"source":"tomatoes","value":91,"score":null},{"source":"tmdb","value":72},{"source":"imdb","value":6.4},` +
+				`{"source":"letterboxd","value":7.4,"score":null},{"source":"metacritic","value":66},{"source":"rogerebert","value":3.5}]`,
 			want: map[string]metadata.RatingSource{
-				metadata.RatingSourceRTCritic: {Score: 91},
-				metadata.RatingSourceTMDB:     {Score: 72},
-				metadata.RatingSourceIMDB:     {Score: 64},
+				metadata.RatingSourceRTCritic:   {Score: 91},
+				metadata.RatingSourceTMDB:       {Score: 72},
+				metadata.RatingSourceIMDB:       {Score: 64},
+				metadata.RatingSourceLetterboxd: {Score: 74},
+				metadata.RatingSourceMetacritic: {Score: 66},
+				metadata.RatingSourceRogerEbert: {Score: 87.5},
 			},
 			wantFlat: metadata.Ratings{IMDB: 6.4, TMDB: 7.2, RTCritic: 91},
 		},
@@ -87,18 +97,26 @@ func TestRatingSourcesConversionRules(t *testing.T) {
 			want:    nil,
 		},
 		{
-			// MDBList aggregates these too. Their owners' terms restrict
-			// redistribution (and Trakt has blocked MDBList), so a rating
-			// from one is dropped even when MDBList normalised it.
-			name: "sources the plugin does not offer are skipped even with a score",
+			// Trakt has blocked MDBList, so its figure is stale or missing,
+			// and Silo keeps at most eight declared sources per capability.
+			name:    "Trakt is skipped even with a score",
+			ratings: `[{"source":"trakt","value":78,"score":78}]`,
+			want:    nil,
+		},
+		{
+			name: "every other aggregated source is kept",
 			ratings: `[{"source":"metacritic","value":87,"score":87},` +
 				`{"source":"metacriticuser","value":7.9,"score":79},` +
-				`{"source":"trakt","value":78,"score":78},` +
 				`{"source":"letterboxd","value":8,"score":80},` +
 				`{"source":"rogerebert","value":4,"score":100},` +
-				`{"source":"myanimelist","value":8.4,"score":84},` +
 				`{"source":"mal","value":8.4,"score":84}]`,
-			want: nil,
+			want: map[string]metadata.RatingSource{
+				metadata.RatingSourceMetacritic:     {Score: 87},
+				metadata.RatingSourceMetacriticUser: {Score: 79},
+				metadata.RatingSourceLetterboxd:     {Score: 80},
+				metadata.RatingSourceRogerEbert:     {Score: 100},
+				metadata.RatingSourceMyAnimeList:    {Score: 84},
+			},
 		},
 	}
 
