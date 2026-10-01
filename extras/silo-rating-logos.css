@@ -1,0 +1,105 @@
+/*
+ * Rating logos for the Silo web app: IMDb and Letterboxd.
+ *
+ * Paste into Admin > Appearance > custom CSS (setting ui.admin_custom_css).
+ * It is stored in the database, so it survives Silo updates.
+ *
+ * Silo writes each rating as a plain-text mark and a score (TMDB alone gets
+ * its logo), with nothing in the markup naming the source. These rules go by
+ * position, which holds only while Letterboxd is the one rating turned on
+ * beyond IMDb and TMDB (Settings > Library & Metadata > Ratings); the plugin
+ * build stores the others but they stay hidden while they are off:
+ * - a list of ratings (title page, Watch Together picker) is IMDb, TMDB,
+ *   Letterboxd in that order, each present only when the title has it. A text
+ *   mark that is first with more ratings after it is IMDb; a text mark after
+ *   the first is Letterboxd. A lone text mark could be either, so it keeps
+ *   its text;
+ * - the home hero and the Watch Tonight card show one rating, IMDb or TMDB,
+ *   so a text mark there is IMDb.
+ * If Silo changes this markup, the rules stop matching and the text shows
+ * again; nothing breaks.
+ *
+ * Heights match TMDB's logo: 10px on title pages, 8px where Silo draws
+ * ratings small (hero, Watch Tonight, Watch Together).
+ *
+ * The logos are the official artwork, embedded as data: URLs so no request
+ * leaves the page: IMDb's 2025 primary logo in IMDb Gold (brand.imdb.com
+ * brand toolkit, IMDb_PrimaryLogo_Gold.svg) and Letterboxd's dots decal on
+ * its dark circle (letterboxd.com/about/brand,
+ * letterboxd-decal-dots-pos-rgb.svg). The files are unmodified. The IMDb rules
+ * leave only IMDb's empty clear space outside the box; the Letterboxd rules
+ * draw the decal larger and show only the band around the dots, so the
+ * circle's edge is cut off. Both are their owners' trademarks ("IMDb and all
+ * related logos are trademarks of IMDb.com, Inc. or its affiliates"); the
+ * source files are in extras/logos.
+ */
+
+/* Every replaced mark (exactly the positions below): hide the text, show the
+   logo. A lone text mark in a list is not listed, so it keeps its text. */
+div.gap-x-5 > span:first-child:not(:last-child) > span.whitespace-nowrap:has(> span.tabular-nums) > span:first-child,
+div.gap-x-5 > span:not(:first-child) > span.whitespace-nowrap:has(> span.tabular-nums) > span:first-child,
+div.flex-wrap > span.whitespace-nowrap:has(> span.tabular-nums).rounded-full:first-child:not(:last-child) > span:first-child,
+div.flex-wrap > span.whitespace-nowrap:has(> span.tabular-nums).rounded-full:not(:first-child) > span:first-child,
+.hero-meta-track > span.whitespace-nowrap:has(> span.tabular-nums) > span:first-child,
+div.flex-wrap > span.whitespace-nowrap:has(> span.tabular-nums):not(.rounded-full) > span:first-child {
+  display: inline-block;
+  font-size: 0 !important;
+  color: transparent;
+  opacity: 1 !important;
+  vertical-align: middle;
+  background: center / contain no-repeat;
+}
+
+/* IMDb in a list (title page, Watch Together): first, with more after it. */
+div.gap-x-5 > span:first-child:not(:last-child) > span.whitespace-nowrap:has(> span.tabular-nums) > span:first-child,
+div.flex-wrap > span.whitespace-nowrap:has(> span.tabular-nums).rounded-full:first-child:not(:last-child) > span:first-child,
+/* IMDb as the one rating (home hero, Watch Tonight). */
+.hero-meta-track > span.whitespace-nowrap:has(> span.tabular-nums) > span:first-child,
+div.flex-wrap > span.whitespace-nowrap:has(> span.tabular-nums):not(.rounded-full) > span:first-child {
+  background-image: url("data:image/svg+xml,%3Csvg id='IMDb_Logo_Gold_with_Clear_Space' xmlns='http://www.w3.org/2000/svg' version='1.1' viewBox='0 0 900 500'%3E%3Cdefs%3E%3Cstyle%3E .st0 %7B fill: none; %7D .st1 %7B fill: %23f5c518; %7D %3C/style%3E%3C/defs%3E%3Cpath id='IMDb_Logo' class='st1' d='M197,122.7v255.4h-66.2V122.7h66.2ZM338.4,122.7l-15.3,119.4-9.4-64.9c-2.8-20.8-5.4-39-8-54.5h-85.9v255.4h58.1l.3-168.6,24.4,168.6h41.4l23.3-172.3v172.3h58.1V122.7h-86.7ZM447.7,378.1V122.7h49.4c32.1,0,50.6,1.5,61.9,4.5,11.3,3,19.9,7.8,25.7,14.5,6,6.7,9.7,14.2,11.1,22.4,1.4,8.3,2.4,24.5,2.4,48.7v89.6c0,22.9-1.2,38.3-3.5,45.9-2.1,7.7-5.9,13.7-11.3,18.1-5.3,4.5-12,7.4-19.8,9.2-7.9,1.7-19.8,2.6-35.7,2.6h-80.4ZM513.9,166.4v167.6c9.5,0,15.4-1.9,17.6-5.7,2.2-3.8,3.4-14.2,3.4-31.3v-98.9c0-11.5-.4-18.9-1.1-22.2-.7-3.3-2.5-5.7-5.1-7.2-2.6-1.6-7.6-2.3-14.7-2.3ZM684.7,122.7v83.1c5.3-6.1,11.3-10.6,17.7-13.6,6.6-3.1,16.3-4.6,23.9-4.6s16.4,1.4,22.9,4.1c6.4,2.7,11.3,6.6,14.7,11.5,3.3,5,5.4,9.8,6.1,14.5.7,4.7,1,14.7,1,30.2v71.7c0,15.2-1,26.6-3.1,34.2-2,7.4-6.8,14-14.5,19.4-7.6,5.6-16.7,8.3-27.1,8.3s-17.2-1.6-23.8-4.8c-6.6-3.4-12.5-8.2-17.8-14.7l-4.2,16.2h-59.7V122.7h63.9ZM707.1,250.7c0-10.8-.7-17.8-2.1-21.2-1.4-3.2-6.8-5-10.9-5s-6.4,1.5-7.7,4.3c-1.1,3-1.7,10.2-1.7,21.8v67.5c0,11.3.7,18.4,2,21.5,1.4,3.2,4,4.7,7.9,4.7s9.4-1.6,10.7-4.8c1.2-3.2,1.9-11.1,1.9-23.4v-65.5Z'/%3E%3Crect id='Clear_Space' class='st0' x='-.4' y='1' width='901.9' height='500'/%3E%3C/svg%3E");
+}
+
+/* The IMDb file is 900 x 500 with IMDb's clear space around the wordmark,
+   which sits at 130.5,122.5 and is 640.5 x 259. Draw the file so the wordmark
+   is as tall as TMDB's logo and let only the empty margin fall outside the
+   box. Title page: 10px. */
+div.gap-x-5 > span:first-child:not(:last-child) > span.whitespace-nowrap:has(> span.tabular-nums) > span:first-child {
+  width: 25px;
+  height: 10px;
+  background-size: 34.75px 19.3px;
+  background-position: -5.04px -4.73px;
+}
+
+/* Small ratings: 8px. */
+div.flex-wrap > span.whitespace-nowrap:has(> span.tabular-nums).rounded-full:first-child:not(:last-child) > span:first-child,
+.hero-meta-track > span.whitespace-nowrap:has(> span.tabular-nums) > span:first-child,
+div.flex-wrap > span.whitespace-nowrap:has(> span.tabular-nums):not(.rounded-full) > span:first-child {
+  width: 20px;
+  height: 8px;
+  background-size: 27.8px 15.44px;
+  background-position: -4.03px -3.78px;
+}
+
+/* Letterboxd: a text mark after the first rating in a list. The decal's dots
+   fill only the middle of its circle (141 of its 500 units): draw the decal so
+   the dots are as tall as TMDB's logo and show only the band around them. */
+div.gap-x-5 > span:not(:first-child) > span.whitespace-nowrap:has(> span.tabular-nums) > span:first-child,
+div.flex-wrap > span.whitespace-nowrap:has(> span.tabular-nums).rounded-full:not(:first-child) > span:first-child {
+  background-image: url("data:image/svg+xml,%3Csvg width='500px' height='500px' viewBox='0 0 500 500' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'%3E%3Cdefs%3E%3Crect id='path-1' x='0' y='0' width='129.847328' height='141.389313'%3E%3C/rect%3E%3Crect id='path-3' x='0' y='0' width='129.847328' height='141.389313'%3E%3C/rect%3E%3C/defs%3E%3Cg id='letterboxd-decal-dots-pos-rgb' stroke='none' stroke-width='1' fill='none' fill-rule='evenodd'%3E%3Ccircle id='Circle' fill='%23202830' cx='250' cy='250' r='250'%3E%3C/circle%3E%3Cg id='dots-neg' transform='translate%2861.000000, 180.000000%29'%3E%3Cg id='Dots'%3E%3Cellipse id='Green' fill='%2300E054' cx='189' cy='69.9732824' rx='70.0786517' ry='69.9732824'%3E%3C/ellipse%3E%3Cg id='Blue' transform='translate%28248.152672, 0.000000%29'%3E%3Cmask id='mask-2' fill='white'%3E%3Cuse xlink:href='%23path-1'%3E%3C/use%3E%3C/mask%3E%3Cg id='Mask'%3E%3C/g%3E%3Cellipse fill='%2340BCF4' mask='url%28%23mask-2%29' cx='59.7686766' cy='69.9732824' rx='70.0786517' ry='69.9732824'%3E%3C/ellipse%3E%3C/g%3E%3Cg id='Orange'%3E%3Cmask id='mask-4' fill='white'%3E%3Cuse xlink:href='%23path-3'%3E%3C/use%3E%3C/mask%3E%3Cg id='Mask'%3E%3C/g%3E%3Cellipse fill='%23FF8000' mask='url%28%23mask-4%29' cx='70.0786517' cy='69.9732824' rx='70.0786517' ry='69.9732824'%3E%3C/ellipse%3E%3C/g%3E%3Cpath d='M129.539326,107.022244 C122.810493,96.2781677 118.921348,83.5792213 118.921348,69.9732824 C118.921348,56.3673435 122.810493,43.6683972 129.539326,32.9243209 C136.268159,43.6683972 140.157303,56.3673435 140.157303,69.9732824 C140.157303,83.5792213 136.268159,96.2781677 129.539326,107.022244 Z' id='Overlap' fill='%23FFFFFF'%3E%3C/path%3E%3Cpath d='M248.460674,32.9243209 C255.189507,43.6683972 259.078652,56.3673435 259.078652,69.9732824 C259.078652,83.5792213 255.189507,96.2781677 248.460674,107.022244 C241.731841,96.2781677 237.842697,83.5792213 237.842697,69.9732824 C237.842697,56.3673435 241.731841,43.6683972 248.460674,32.9243209 Z' id='Overlap' fill='%23FFFFFF'%3E%3C/path%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Title page: dots 10px tall. */
+div.gap-x-5 > span:not(:first-child) > span.whitespace-nowrap:has(> span.tabular-nums) > span:first-child {
+  width: 27px;
+  height: 10px;
+  border-radius: 5px;
+  background-size: 35.5px 35.5px;
+}
+
+/* Watch Together picker: dots 8px tall. */
+div.flex-wrap > span.whitespace-nowrap:has(> span.tabular-nums).rounded-full:not(:first-child) > span:first-child {
+  width: 22px;
+  height: 8px;
+  border-radius: 4px;
+  background-size: 28.4px 28.4px;
+}
