@@ -2,23 +2,26 @@
 
 BINARY=plugin
 PLATFORMS=linux/amd64 linux/arm64 darwin/arm64
-VERSION ?= $(shell git describe --tags --always 2>/dev/null | sed 's/^v//')
+# This unofficial build takes its version from manifest.json (0.5.0-letterboxd),
+# not from upstream's tags, so Silo shows which build is installed.
+VERSION ?= $(shell sed -n 's/^  "version": "\(.*\)",$$/\1/p' manifest.json)
 LDFLAGS=-s -w -X main.version=$(VERSION)
 
 build:
 	go build -trimpath -ldflags="$(LDFLAGS)" -o $(BINARY) .
 
 test:
-	go test ./...
+	go test -race ./...
 
 lint:
 	golangci-lint run ./...
 
 clean:
-	rm -f $(BINARY)
+	rm -rf $(BINARY) dist
 
 build-all:
-	@for platform in $(PLATFORMS); do \
+	@mkdir -p dist
+	@set -e; for platform in $(PLATFORMS); do \
 		GOOS=$${platform%%/*} GOARCH=$${platform##*/} CGO_ENABLED=0 \
 		go build -trimpath -ldflags="$(LDFLAGS)" -o dist/$(BINARY)-$${platform%%/*}-$${platform##*/} .; \
 	done

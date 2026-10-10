@@ -7,12 +7,8 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
 	_ "embed"
-	"encoding/hex"
 	"errors"
-	"fmt"
-	"os"
 	"strings"
 
 	"google.golang.org/grpc/codes"
@@ -22,7 +18,6 @@ import (
 	"github.com/Silo-Server/silo-plugin-metadata-mdblist/metadata"
 	"github.com/Silo-Server/silo-plugin-metadata-mdblist/provider"
 	pluginv1 "github.com/Silo-Server/silo-plugin-sdk/pkg/pluginproto/silo/plugin/v1"
-	publicmanifest "github.com/Silo-Server/silo-plugin-sdk/pkg/pluginsdk/manifest"
 	"github.com/Silo-Server/silo-plugin-sdk/pkg/pluginsdk/runtime"
 )
 
@@ -32,25 +27,18 @@ var version string
 //go:embed manifest.json
 var manifestJSON []byte
 
-type runtimeServer struct {
-	pluginv1.UnimplementedRuntimeServer
-
-	manifest *pluginv1.PluginManifest
-	client   *provider.Client
-}
-
 type metadataServer struct {
 	pluginv1.UnimplementedMetadataProviderServer
-	runtime *runtimeServer
+	client *provider.Client
 }
 
-func (s *runtimeServer) GetManifest(context.Context, *pluginv1.GetManifestRequest) (*pluginv1.GetManifestResponse, error) {
-	return &pluginv1.GetManifestResponse{Manifest: s.manifest}, nil
-}
-
-func (s *runtimeServer) Configure(_ context.Context, req *pluginv1.ConfigureRequest) (*pluginv1.ConfigureResponse, error) {
-	s.client.SetAPIKey(apiKeyFromConfig(req.GetConfig()))
-	return &pluginv1.ConfigureResponse{}, nil
+// configure is the Runtime.Configure callback the SDK's runtime server passes
+// the saved settings to. It only stores the API key: a missing key is not an
+// error here, because the host must still be able to start the plugin, and
+// GetMetadata reports it as FAILED_PRECONDITION instead.
+func (s *metadataServer) configure(_ context.Context, entries []*pluginv1.ConfigEntry) error {
+	s.client.SetAPIKey(apiKeyFromConfig(entries))
+	return nil
 }
 
 // Search always returns nothing. MDBList has a /search endpoint, but using it
@@ -62,7 +50,7 @@ func (s *metadataServer) Search(context.Context, *pluginv1.SearchMetadataRequest
 }
 
 func (s *metadataServer) GetMetadata(ctx context.Context, req *pluginv1.GetMetadataRequest) (*pluginv1.GetMetadataResponse, error) {
-	result, err := s.runtime.client.GetMetadata(ctx, metadata.MetadataRequest{
+	result, err := s.client.GetMetadata(ctx, metadata.MetadataRequest{
 		ProviderIDs: stringMapFromStruct(req.GetProviderIds()),
 		ContentType: req.GetItemType(),
 	})
@@ -131,23 +119,16 @@ func (s *metadataServer) ResolveImageURLs(context.Context, *pluginv1.ResolveImag
 	return &pluginv1.ResolveImageURLsResponse{}, nil
 }
 
+// main serves the plugin through the SDK's manifest bootstrap: it loads and
+// validates the embedded manifest, stamps the build version and the binary's
+// checksum, answers the "manifest" subcommand, and runs the SDK's Runtime
+// server, which wires the host broker and hands saved settings to configure.
 func main() {
-	manifest, err := loadManifest()
-	if err != nil {
-		panic(err)
-	}
-
-	rs := &runtimeServer{
-		manifest: manifest,
-		client:   newClient(),
-	}
-
-	runtime.Serve(runtime.ServeConfig{
-		Servers: runtime.CapabilityServers{
-			Runtime:          rs,
-			MetadataProvider: &metadataServer{runtime: rs},
-		},
-	})
+	server := &metadataServer{client: newClient()}
+	runtime.ServeManifestWithOptions(manifestJSON, version,
+		runtime.CapabilityServers{MetadataProvider: server},
+		runtime.WithConfigure(server.configure),
+	)
 }
 
 // newClient builds the MDBList client with a User-Agent naming this build.
@@ -159,30 +140,6 @@ func newClient() *provider.Client {
 	}
 	client.SetUserAgent(userAgent)
 	return client
-}
-
-func loadManifest() (*pluginv1.PluginManifest, error) {
-	manifest, err := publicmanifest.Load(manifestJSON)
-	if err != nil {
-		return nil, fmt.Errorf("load embedded manifest: %w", err)
-	}
-
-	if version != "" {
-		manifest.Version = version
-	}
-
-	executablePath, err := os.Executable()
-	if err != nil {
-		return nil, fmt.Errorf("resolve executable path: %w", err)
-	}
-	binaryData, err := os.ReadFile(executablePath)
-	if err != nil {
-		return nil, fmt.Errorf("read executable %q: %w", executablePath, err)
-	}
-	checksum := sha256.Sum256(binaryData)
-	manifest.Checksum = hex.EncodeToString(checksum[:])
-
-	return manifest, nil
 }
 
 // apiKeyFromConfig reads the "account" config entry declared in

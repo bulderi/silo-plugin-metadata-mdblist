@@ -257,21 +257,29 @@ func applyRatings(ratings *metadata.Ratings, entries []ratingEntry) {
 
 // valueScales converts a source's own-scale "value" to 0-100 when "score" is
 // null. Only scales the Jaws fixture pins are listed; a source missing here
-// (the Rotten Tomatoes audience score) is used only when MDBList supplied a
-// score.
+// (the Rotten Tomatoes audience score, Metacritic's user score, MyAnimeList) is
+// used only when MDBList supplied a score.
 //
-//	imdb      8.1 -> 81  (out of 10)
-//	tmdb, tomatoes: value equals score (out of 100)
+//	imdb        8.1 -> 81   (out of 10)
+//	tmdb, tomatoes, metacritic: value equals score (out of 100)
+//	letterboxd  8   -> 80   (MDBList doubles Letterboxd's 5 stars to 10)
+//	rogerebert  4   -> 100  (out of 4 stars; the fixture has no score)
 var valueScales = map[string]float64{
-	metadata.RatingSourceIMDB:     10,
-	metadata.RatingSourceTMDB:     1,
-	metadata.RatingSourceRTCritic: 1,
+	metadata.RatingSourceIMDB:       10,
+	metadata.RatingSourceTMDB:       1,
+	metadata.RatingSourceRTCritic:   1,
+	metadata.RatingSourceMetacritic: 1,
+	metadata.RatingSourceLetterboxd: 10,
+	metadata.RatingSourceRogerEbert: 25,
 }
 
 // ratingSourceNames maps the MDBList sources the plugin reports onto Silo's
-// keys. MDBList also aggregates Metacritic, Letterboxd, Trakt, Roger Ebert and
-// MyAnimeList ratings; the plugin drops them because their owners' terms
-// restrict redistribution, and Trakt has blocked MDBList's API access.
+// keys. This unofficial build keeps every rating MDBList aggregates, so Silo
+// stores as much as it can; the manifest declares each one, Letterboxd first,
+// and an administrator decides which a title page shows. Trakt's rating is
+// left out: Trakt has blocked MDBList's API access, so MDBList's figure is
+// stale or missing, and Silo keeps at most eight declared sources per
+// capability.
 var ratingSourceNames = map[string]string{
 	"imdb":             metadata.RatingSourceIMDB,
 	"tmdb":             metadata.RatingSourceTMDB,
@@ -279,6 +287,12 @@ var ratingSourceNames = map[string]string{
 	"audience":         metadata.RatingSourceRTAudience,
 	"popcorn":          metadata.RatingSourceRTAudience,
 	"tomatoesaudience": metadata.RatingSourceRTAudience,
+	"letterboxd":       metadata.RatingSourceLetterboxd,
+	"metacritic":       metadata.RatingSourceMetacritic,
+	"metacriticuser":   metadata.RatingSourceMetacriticUser,
+	"rogerebert":       metadata.RatingSourceRogerEbert,
+	"myanimelist":      metadata.RatingSourceMyAnimeList,
+	"mal":              metadata.RatingSourceMyAnimeList,
 }
 
 // RatingSourceKeys lists, sorted, every key ratingSources can report: the

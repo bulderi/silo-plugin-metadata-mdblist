@@ -44,6 +44,16 @@ const (
 	RatingSourceTMDB       = "tmdb"
 	RatingSourceRTCritic   = "rt_critic"
 	RatingSourceRTAudience = "rt_audience"
+	// RatingSourceLetterboxd is Letterboxd's average rating, out of 5 stars.
+	RatingSourceLetterboxd = "letterboxd"
+	// RatingSourceMetacritic is the critics' Metascore, out of 100.
+	RatingSourceMetacritic = "metacritic"
+	// RatingSourceMetacriticUser is Metacritic's user score, out of 10.
+	RatingSourceMetacriticUser = "metacritic_user"
+	// RatingSourceRogerEbert is Roger Ebert's star rating, out of 4.
+	RatingSourceRogerEbert = "rogerebert"
+	// RatingSourceMyAnimeList is MyAnimeList's score, out of 10.
+	RatingSourceMyAnimeList = "myanimelist"
 	// RatingSourceMDBList is MDBList's own aggregate score for the title.
 	RatingSourceMDBList = "mdblist"
 )
@@ -70,8 +80,8 @@ type MetadataResult struct {
 
 	Ratings Ratings
 
-	// RatingSources carries the IMDb, TMDB and Rotten Tomatoes ratings and
-	// MDBList's own score, keyed by the RatingSource* constants. Hosts that
+	// RatingSources carries every rating MDBList has for the title except
+	// Trakt's, plus MDBList's own score, keyed by the RatingSource* constants. Hosts that
 	// predate per-source storage ignore it; it never replaces Ratings.
 	RatingSources map[string]RatingSource
 

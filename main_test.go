@@ -12,6 +12,7 @@ import (
 	"unicode/utf8"
 
 	pluginv1 "github.com/Silo-Server/silo-plugin-sdk/pkg/pluginproto/silo/plugin/v1"
+	publicmanifest "github.com/Silo-Server/silo-plugin-sdk/pkg/pluginsdk/manifest"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -44,10 +45,11 @@ func mustStruct(t *testing.T, value map[string]any) *structpb.Struct {
 	return result
 }
 
-// newServers wires the same two gRPC server types main() serves, pointed at a
-// fake MDBList. This is as close as a unit test gets to the way the host calls
-// the plugin.
-func newServers(t *testing.T, status int, body string) (*runtimeServer, *metadataServer, *fakeAPI) {
+// newServers wires the metadata server main() serves, pointed at a fake
+// MDBList. Settings reach it through configure, the callback main() hands the
+// SDK's Runtime server, so the tests call it the way Runtime.Configure does.
+// This is as close as a unit test gets to the way the host calls the plugin.
+func newServers(t *testing.T, status int, body string) (*metadataServer, *fakeAPI) {
 	t.Helper()
 
 	api := newFakeAPI(t, status, body)
@@ -55,11 +57,7 @@ func newServers(t *testing.T, status int, body string) (*runtimeServer, *metadat
 	client := provider.NewClient()
 	client.SetBaseURL(api.server.URL)
 
-	rs := &runtimeServer{
-		manifest: &pluginv1.PluginManifest{PluginId: "silo.mdblist"},
-		client:   client,
-	}
-	return rs, &metadataServer{runtime: rs}, api
+	return &metadataServer{client: client}, api
 }
 
 type fakeAPI struct {
@@ -103,15 +101,13 @@ func (a *fakeAPI) requests() (paths, keys []string) {
 func TestGetMetadataEndToEnd(t *testing.T) {
 	t.Parallel()
 
-	rs, ms, api := newServers(t, http.StatusOK, fixtureBody(t))
+	ms, api := newServers(t, http.StatusOK, fixtureBody(t))
 
-	if _, err := rs.Configure(context.Background(), &pluginv1.ConfigureRequest{
-		Config: []*pluginv1.ConfigEntry{{
-			Key:   "account",
-			Value: mustStruct(t, map[string]any{"api_key": "secret-key"}),
-		}},
-	}); err != nil {
-		t.Fatalf("Configure() returned error: %v", err)
+	if err := ms.configure(context.Background(), []*pluginv1.ConfigEntry{{
+		Key:   "account",
+		Value: mustStruct(t, map[string]any{"api_key": "secret-key"}),
+	}}); err != nil {
+		t.Fatalf("configure() returned error: %v", err)
 	}
 
 	response, err := ms.GetMetadata(context.Background(), &pluginv1.GetMetadataRequest{
@@ -146,18 +142,20 @@ func TestGetMetadataEndToEnd(t *testing.T) {
 	// 10, rt_critic and rt_audience out of 100). The fixture has no Rotten
 	// Tomatoes audience score, so that key must be absent rather than zero.
 	// "sources" carries the same ratings on a 0-100 scale, plus MDBList's own
-	// score, for hosts that store them. The fixture also rates Metacritic,
-	// Trakt, Letterboxd and Roger Ebert; the plugin does not offer those, so
-	// they must not appear.
+	// score and every other rating the fixture has except Trakt's, for hosts
+	// that store them. Trakt's must not appear.
 	wantRatings := map[string]any{
 		"imdb":      8.1,
 		"tmdb":      7.6,
 		"rt_critic": float64(97),
 		"sources": map[string]any{
-			"imdb":      map[string]any{"score": float64(81), "votes": float64(673852)},
-			"tmdb":      map[string]any{"score": float64(76), "votes": float64(10114)},
-			"rt_critic": map[string]any{"score": float64(97), "votes": float64(102)},
-			"mdblist":   map[string]any{"score": float64(86)},
+			"imdb":       map[string]any{"score": float64(81), "votes": float64(673852)},
+			"tmdb":       map[string]any{"score": float64(76), "votes": float64(10114)},
+			"rt_critic":  map[string]any{"score": float64(97), "votes": float64(102)},
+			"letterboxd": map[string]any{"score": float64(80), "votes": float64(876082)},
+			"metacritic": map[string]any{"score": float64(87), "votes": float64(21)},
+			"rogerebert": map[string]any{"score": float64(100)},
+			"mdblist":    map[string]any{"score": float64(86)},
 		},
 	}
 	if got := item.GetRatings().AsMap(); !reflect.DeepEqual(got, wantRatings) {
@@ -242,8 +240,8 @@ func TestGetMetadataForSeriesEndToEnd(t *testing.T) {
 		`"ratings":[{"source":"imdb","value":9.5,"score":95},{"source":"tmdb","value":89,"score":89},` +
 		`{"source":"tomatoes","value":96,"score":96},{"source":"popcorn","value":97,"score":97}]}`
 
-	rs, ms, api := newServers(t, http.StatusOK, body)
-	rs.client.SetAPIKey("k")
+	ms, api := newServers(t, http.StatusOK, body)
+	ms.client.SetAPIKey("k")
 
 	response, err := ms.GetMetadata(context.Background(), &pluginv1.GetMetadataRequest{
 		ItemType:    "series",
@@ -343,8 +341,8 @@ func TestGetMetadataWithoutExternalIDReturnsEmpty(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			rs, ms, api := newServers(t, http.StatusOK, fixtureBody(t))
-			rs.client.SetAPIKey("k")
+			ms, api := newServers(t, http.StatusOK, fixtureBody(t))
+			ms.client.SetAPIKey("k")
 
 			response, err := ms.GetMetadata(context.Background(), &pluginv1.GetMetadataRequest{
 				ItemType:    "movie",
@@ -390,8 +388,8 @@ func TestGetMetadataMapsFailuresToStatuses(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			rs, ms, _ := newServers(t, tt.status, tt.body)
-			rs.client.SetAPIKey(tt.apiKey)
+			ms, _ := newServers(t, tt.status, tt.body)
+			ms.client.SetAPIKey(tt.apiKey)
 
 			response, err := ms.GetMetadata(context.Background(), &pluginv1.GetMetadataRequest{
 				ItemType:    "movie",
@@ -412,7 +410,7 @@ func TestGetMetadataMapsFailuresToStatuses(t *testing.T) {
 func TestSearchReturnsNoResults(t *testing.T) {
 	t.Parallel()
 
-	_, ms, api := newServers(t, http.StatusOK, fixtureBody(t))
+	ms, api := newServers(t, http.StatusOK, fixtureBody(t))
 
 	for _, req := range []*pluginv1.SearchMetadataRequest{
 		{Query: "Jaws", ItemType: "movie", Year: 1975},
@@ -439,7 +437,7 @@ func TestSearchReturnsNoResults(t *testing.T) {
 func TestUnsupportedRPCsAnswerEmptySuccessfully(t *testing.T) {
 	t.Parallel()
 
-	_, ms, api := newServers(t, http.StatusOK, fixtureBody(t))
+	ms, api := newServers(t, http.StatusOK, fixtureBody(t))
 	ctx := context.Background()
 	providerIDs := mustStruct(t, map[string]any{"imdb": "tt0903747", "tmdb": "1396"})
 
@@ -676,7 +674,7 @@ func TestAPIKeyFromConfig(t *testing.T) {
 func TestConfigureClearsTheKey(t *testing.T) {
 	t.Parallel()
 
-	rs, ms, api := newServers(t, http.StatusOK, fixtureBody(t))
+	ms, api := newServers(t, http.StatusOK, fixtureBody(t))
 	lookup := func(want codes.Code) {
 		t.Helper()
 
@@ -689,18 +687,18 @@ func TestConfigureClearsTheKey(t *testing.T) {
 		}
 	}
 
-	if _, err := rs.Configure(context.Background(), &pluginv1.ConfigureRequest{
-		Config: []*pluginv1.ConfigEntry{{Key: "account", Value: mustStruct(t, map[string]any{"api_key": "secret"})}},
+	if err := ms.configure(context.Background(), []*pluginv1.ConfigEntry{
+		{Key: "account", Value: mustStruct(t, map[string]any{"api_key": "secret"})},
 	}); err != nil {
-		t.Fatalf("Configure() returned error: %v", err)
+		t.Fatalf("configure() returned error: %v", err)
 	}
 	lookup(codes.OK)
 	if _, keys := api.requests(); !reflect.DeepEqual(keys, []string{"secret"}) {
 		t.Fatalf("apikey query values = %v, want [secret] after Configure with a key", keys)
 	}
 
-	if _, err := rs.Configure(context.Background(), &pluginv1.ConfigureRequest{}); err != nil {
-		t.Fatalf("Configure() returned error: %v", err)
+	if err := ms.configure(context.Background(), nil); err != nil {
+		t.Fatalf("configure() returned error: %v", err)
 	}
 	lookup(codes.FailedPrecondition)
 	if _, keys := api.requests(); len(keys) != 1 {
@@ -747,9 +745,11 @@ func TestStringMapFromStruct(t *testing.T) {
 func TestManifestContract(t *testing.T) {
 	t.Parallel()
 
-	manifest, err := loadManifest()
+	// LoadWithChecksum is the bootstrap ServeManifestWithOptions runs: it
+	// validates the manifest, stamps the version and the binary's checksum.
+	manifest, err := publicmanifest.LoadWithChecksum(manifestJSON, version)
 	if err != nil {
-		t.Fatalf("loadManifest() returned error: %v", err)
+		t.Fatalf("LoadWithChecksum() returned error: %v", err)
 	}
 
 	if got, want := manifest.GetPluginId(), "silo.mdblist"; got != want {
@@ -810,6 +810,17 @@ func TestManifestContract(t *testing.T) {
 	if !ok {
 		t.Fatalf("capability metadata has no rating_sources list: %v", capabilityMetadata)
 	}
+	// Silo keeps at most eight declarations per capability and silently drops
+	// the rest, which would drop that source's scores too.
+	if len(ratingSources) > 8 {
+		t.Fatalf("rating_sources has %d entries, want at most 8", len(ratingSources))
+	}
+	// Letterboxd comes first, so among this plugin's sources it gets the title
+	// page's one slot beyond IMDb and TMDB. (Silo's built-in NFO provider
+	// declares Rotten Tomatoes ahead of every plugin.)
+	if first, _ := ratingSources[0].(map[string]any); first["id"] != metadata.RatingSourceLetterboxd {
+		t.Fatalf("first rating_sources entry = %v, want letterboxd", first["id"])
+	}
 	var declaredIDs []string
 	for _, raw := range ratingSources {
 		entry, ok := raw.(map[string]any)
@@ -847,5 +858,30 @@ func TestManifestContract(t *testing.T) {
 	}
 	if !schemas[0].GetRequired() {
 		t.Fatal("the account config schema is not required, want required")
+	}
+}
+
+// TestManifestPresentation checks the complete presentation block Silo's
+// catalog tooling requires, with the source link pointing at this fork and the
+// publisher and license matching the repository.
+func TestManifestPresentation(t *testing.T) {
+	t.Parallel()
+
+	manifest, err := publicmanifest.Load(manifestJSON)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := publicmanifest.ValidateCatalogPresentation(manifest, "https://github.com/bulderi/silo-plugin-metadata-mdblist"); err != nil {
+		t.Fatalf("presentation: %v", err)
+	}
+	presentation := manifest.GetPresentation()
+	if got, want := presentation.GetPublisherName(), "bulderi"; got != want {
+		t.Errorf("publisher_name = %q, want %q: this build is not published by Silo", got, want)
+	}
+	if got, want := presentation.GetChangelogUrl(), "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases"; got != want {
+		t.Errorf("changelog_url = %q, want %q", got, want)
+	}
+	if got := presentation.GetLicenseSpdx(); got != "AGPL-3.0-only" {
+		t.Errorf("license_spdx = %q, want the license in LICENSE", got)
 	}
 }
