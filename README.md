@@ -39,6 +39,8 @@ and show status.
   version ends in `-letterboxd`, and its publisher, source, support and
   changelog links point to this fork. Releases are cut only from a tag you
   push, such as `v0.5.0-letterboxd`.
+- **Its own plugin repository.** Silo installs and updates it from this
+  fork's `index.json` (see [Install](#install)).
 
 ## Requirements
 
@@ -179,14 +181,49 @@ A genuine 0% Rotten Tomatoes score is reported as "no score". Zero is the
 absent sentinel in the host's rating merge and columns, so it cannot currently
 be told apart from unrated; fixing it needs nullable rating fields host side.
 
+## Install
+
+1. In Silo, open the administrator **Plugins** page, select **Catalog**, and
+   click **Add repository**. Name it, for example, **MDBList (Letterboxd
+   build)**, and use this URL:
+
+   ```text
+   https://raw.githubusercontent.com/bulderi/silo-plugin-metadata-mdblist/main/index.json
+   ```
+
+2. Find **MDBList Ratings** with the version ending in `-letterboxd` in the
+   catalog and click **Install**.
+
+Silo downloads the binary for its platform and checks its SHA-256, and new
+releases of this build appear as updates. Silo only offers updates from the
+repository a plugin was installed from, so the official repository never
+replaces this build. Binaries are published for Linux amd64, Linux arm64, and
+macOS arm64.
+
+An installation uploaded by hand, or installed from the official repository,
+is not linked to this one, and the catalog shows the plugin as already
+installed. To link it without losing its settings, add the repository, then
+install this build's version from it through the admin API. Silo replaces the
+installation in place, so its ID, the saved API key, and its place in each
+library's provider chain stay:
+
+```sh
+curl -X POST "$SILO_URL/api/v2/admin/plugins/installations" \
+  -H "Authorization: Bearer $SILO_ADMIN_API_KEY" -H "Content-Type: application/json" \
+  -d '{"repository_id": <id>, "plugin_id": "silo.mdblist", "version": "<version>"}'
+```
+
+`GET /api/v2/admin/plugins/repositories` lists the repository ID. The call
+needs an unscoped API key owned by an administrator. Uninstalling and
+installing from the catalog also links it, but then the API key has to be
+saved again.
+
 ## Setup
 
 1. Create an API key in your [MDBList](https://mdblist.com) preferences.
-2. Download `plugin-linux-amd64` (or `-arm64`) from this fork's
-   [releases](https://github.com/bulderi/silo-plugin-metadata-mdblist/releases),
-   or build it with `make build-all`, and upload it under Silo's plugin admin. If the official MDBList plugin or
-   another plugin with the ID `silo.mdblist` is installed, this one replaces
-   it.
+2. Install the plugin as described under [Install](#install). If the official
+   MDBList plugin or another plugin with the ID `silo.mdblist` is installed,
+   this one replaces it.
 3. Paste the key into the plugin's settings. Without a key the plugin stays
    idle and contributes nothing.
 4. Check that **MDBList** sits in each movie and series library's metadata
@@ -265,17 +302,26 @@ The plugin starts through the SDK's manifest bootstrap
 (`runtime.ServeManifestWithOptions`), which validates the manifest, stamps the
 version and the binary's checksum, and answers `plugin manifest`.
 
-Pushing a tag that matches the manifest version (`v0.5.0-letterboxd`) runs the
-release workflow, which builds every platform and publishes the binaries with
-`checksums.txt`. [CONTRIBUTING.md](CONTRIBUTING.md) lists the checks to run
-first.
+To release, bump `version` in `manifest.json`, add the changes to
+[CHANGELOG.md](CHANGELOG.md), and push a matching tag (`v0.5.1-letterboxd`);
+there is no automatic version bump. The release workflow runs the CI checks,
+builds every platform, and publishes the binaries with `checksums.txt` and
+`index.json`, written by `cmd/genindex`. It then commits that `index.json` to
+`main`, which is the file the install URL serves.
+[CONTRIBUTING.md](CONTRIBUTING.md) lists the checks to run first.
+
+Silo compares versions segment by segment and compares a segment with the
+suffix as text, so it would rank `0.5.10-letterboxd` below `0.5.9-letterboxd`
+and offer no update. Move to the next minor version instead of a two-digit
+patch.
 
 ## Keeping up with the official plugin
 
-This fork is the official plugin plus two commits: the plugin changes and the
-logo CSS. With the official repository as the `upstream` remote, move them
-onto a new official version with a rebase, run the tests, set the version to
-the official one plus `-letterboxd`, and push:
+This fork is the official plugin plus its own commits: the plugin changes, the
+logo CSS, the install index and its release tooling, and the index commits the
+release workflow adds. With the official repository as the `upstream` remote,
+move them onto a new official version with a rebase, run the tests, set the
+version to the official one plus `-letterboxd`, and push:
 
 ```sh
 git fetch upstream

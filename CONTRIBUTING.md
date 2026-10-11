@@ -10,8 +10,9 @@ plugin-specific workflow.
 This repository is a fork of
 [`Silo-Server/silo-plugin-metadata-mdblist`](https://github.com/Silo-Server/silo-plugin-metadata-mdblist).
 It owns only the changes that make this build differ: the rating sources it
-reports and declares, its version suffix and links, and the web CSS in
-`extras/`. Fixes that apply to the official plugin belong upstream. Plugin
+reports and declares, its version suffix and links, the web CSS in
+`extras/`, and its install index (`index.json`, written by `cmd/genindex` from
+`internal/catalogindex`). Fixes that apply to the official plugin belong upstream. Plugin
 contracts belong in
 [`silo-plugin-sdk`](https://github.com/Silo-Server/silo-plugin-sdk), and host
 metadata merging and rating display belong in
@@ -51,10 +52,13 @@ without a score.
 
 ## Keep up with the official plugin
 
-The fork is the official plugin plus two commits: the plugin changes and the
-logo CSS. Rebase them onto each new official release, rerun the validation
-above, and set `manifest.json`'s version to the official version plus
-`-letterboxd` before tagging a release.
+The fork is the official plugin plus its own commits: the plugin changes, the
+logo CSS, the install index and its release tooling, and the index commits the
+release workflow adds. Rebase them onto each new official release, rerun the
+validation above, set `manifest.json`'s version to the official version plus
+`-letterboxd`, and add the release to `CHANGELOG.md` before tagging it. Never
+edit `index.json` by hand: the release workflow writes it from the published
+binaries, and `TestCommittedIndex` checks it.
 
 ## Open the pull request
 

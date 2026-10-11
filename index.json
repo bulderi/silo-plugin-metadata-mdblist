@@ -1,0 +1,146 @@
+{
+  "plugins": [
+    {
+      "manifest": {
+        "plugin_id": "silo.mdblist",
+        "version": "0.5.0-letterboxd",
+        "silo_api_version": "v1",
+        "supported_platforms": [
+          {
+            "os": "darwin",
+            "arch": "arm64"
+          },
+          {
+            "os": "linux",
+            "arch": "amd64"
+          },
+          {
+            "os": "linux",
+            "arch": "arm64"
+          }
+        ],
+        "capabilities": [
+          {
+            "type": "metadata_provider.v1",
+            "id": "mdblist",
+            "display_name": "MDBList",
+            "description": "IMDb, TMDB, Letterboxd, Rotten Tomatoes, Metacritic, Roger Ebert and MyAnimeList ratings, MDBList's own score, age rating, certification, and missing basics. Enrichment only — never identifies an item.",
+            "metadata": {
+              "bulk_lookup_limit": 100,
+              "default_priority": {
+                "movie": 8,
+                "series": 8
+              },
+              "lookup_provider_ids": [
+                "imdb",
+                "tmdb"
+              ],
+              "rating_sources": [
+                {
+                  "id": "letterboxd",
+                  "label": "Letterboxd",
+                  "name": "Letterboxd",
+                  "scale": 5
+                },
+                {
+                  "id": "rt_critic",
+                  "label": "Rotten Tomatoes critics",
+                  "name": "RT",
+                  "percent": true,
+                  "scale": 100
+                },
+                {
+                  "id": "rt_audience",
+                  "label": "Rotten Tomatoes audience",
+                  "name": "RT Audience",
+                  "percent": true,
+                  "scale": 100
+                },
+                {
+                  "id": "metacritic",
+                  "label": "Metacritic critics (Metascore)",
+                  "name": "Metacritic",
+                  "scale": 100
+                },
+                {
+                  "id": "metacritic_user",
+                  "label": "Metacritic users",
+                  "name": "MC Users",
+                  "scale": 10
+                },
+                {
+                  "id": "rogerebert",
+                  "label": "Roger Ebert",
+                  "name": "Roger Ebert",
+                  "scale": 4
+                },
+                {
+                  "id": "myanimelist",
+                  "label": "MyAnimeList",
+                  "name": "MAL",
+                  "scale": 10
+                },
+                {
+                  "id": "mdblist",
+                  "label": "MDBList score",
+                  "name": "MDBList",
+                  "scale": 100
+                }
+              ]
+            }
+          }
+        ],
+        "global_config_schema": [
+          {
+            "key": "account",
+            "title": "MDBList Account",
+            "description": "MDBList API key. Without it the provider stays idle and contributes nothing.",
+            "json_schema": "{\"type\":\"object\",\"properties\":{\"api_key\":{\"type\":\"string\"}},\"additionalProperties\":false}",
+            "required": true,
+            "admin_form": {
+              "fields": [
+                {
+                  "key": "api_key",
+                  "label": "API Key",
+                  "description": "Free API key from your MDBList preferences page.",
+                  "control": 3,
+                  "secret": true
+                }
+              ],
+              "submit_label": "Save MDBList account"
+            }
+          }
+        ],
+        "presentation": {
+          "display_name": "MDBList Ratings",
+          "summary": "IMDb, TMDB, Letterboxd, Rotten Tomatoes, Metacritic, Roger Ebert and MyAnimeList ratings, MDBList's own score, age ratings, and missing basics from MDBList.",
+          "description_markdown": "Fills in what other metadata providers leave empty: IMDb and TMDB ratings, Letterboxd's rating, the Rotten Tomatoes critic and audience scores, Metacritic's critic and user scores, Roger Ebert's stars, MyAnimeList's score, MDBList's own score, the Common Sense age rating, the release certification, and basics such as year, release date, runtime, language, genres, and show status.\n\nSilo stores every one of these ratings and shows each only after an administrator turns it on under Settings \u003e Library \u0026 Metadata \u003e Ratings. This unofficial build is meant to show Letterboxd only: turn on Letterboxd and leave the others off.\n\nThis provider never identifies an item. It looks up titles that another provider has already matched, using the IMDb or TMDB ID that provider resolved, so it must sit *below* a primary metadata provider such as TMDB in a library's provider chain.",
+          "setup_markdown": "Create a free API key in your MDBList preferences, add it below, then add **MDBList** to a library's metadata provider chain at a lower priority than your primary provider.\n\nThe free tier allows 1000 requests per day. Lookups that arrive together are sent as one batch request, and Silo's hourly Bulk Metadata Enrichment task sends up to 100 titles at a time. When the quota runs out the plugin pauses until it resets and tells Silo so, and Silo looks those titles up again later; it never fails a metadata refresh.",
+          "homepage_url": "https://mdblist.com",
+          "source_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist",
+          "support_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/issues",
+          "changelog_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases",
+          "publisher_name": "bulderi",
+          "publisher_url": "https://github.com/bulderi",
+          "license_spdx": "AGPL-3.0-only"
+        }
+      },
+      "repo_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist",
+      "checksums_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.0-letterboxd/checksums.txt",
+      "binaries": {
+        "darwin/arm64": {
+          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.0-letterboxd/plugin-darwin-arm64",
+          "checksum": "6ce428d9e62b5d7c2b7a4b24837101b76db1cdaceff4c7e3ec34acab9511f004"
+        },
+        "linux/amd64": {
+          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.0-letterboxd/plugin-linux-amd64",
+          "checksum": "bbd0e556e767f6fc73b2f9c2ee9ab4495aa0b3a7ca744416604a37742336e253"
+        },
+        "linux/arm64": {
+          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.0-letterboxd/plugin-linux-arm64",
+          "checksum": "a2e57cdfaeddfae49c87583d2cef0a3a3a7703c04dec0c6f97d43e9d29d020ab"
+        }
+      }
+    }
+  ]
+}
