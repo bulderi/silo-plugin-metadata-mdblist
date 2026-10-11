@@ -191,32 +191,31 @@ be told apart from unrated; fixing it needs nullable rating fields host side.
    https://raw.githubusercontent.com/bulderi/silo-plugin-metadata-mdblist/main/index.json
    ```
 
-2. Find **MDBList Ratings** with the version ending in `-letterboxd` in the
-   catalog and click **Install**.
+2. Install this build from that repository through the admin API:
 
-Silo downloads the binary for its platform and checks its SHA-256, and new
-releases of this build appear as updates. Silo only offers updates from the
-repository a plugin was installed from, so the official repository never
-replaces this build. Binaries are published for Linux amd64, Linux arm64, and
-macOS arm64.
+   ```sh
+   curl -X POST "$SILO_URL/api/v2/admin/plugins/installations" \
+     -H "Authorization: Bearer $SILO_ADMIN_API_KEY" -H "Content-Type: application/json" \
+     -d '{"repository_id": "<id>", "plugin_id": "silo.mdblist", "version": "0.5.0-letterboxd"}'
+   ```
 
-An installation uploaded by hand, or installed from the official repository,
-is not linked to this one, and the catalog shows the plugin as already
-installed. To link it without losing its settings, add the repository, then
-install this build's version from it through the admin API. Silo replaces the
-installation in place, so its ID, the saved API key, and its place in each
-library's provider chain stay:
+   `GET /api/v2/admin/plugins/repositories` lists the repository ID. The API
+   takes it as a string, and the call needs an unscoped API key owned by an
+   administrator.
 
-```sh
-curl -X POST "$SILO_URL/api/v2/admin/plugins/installations" \
-  -H "Authorization: Bearer $SILO_ADMIN_API_KEY" -H "Content-Type: application/json" \
-  -d '{"repository_id": <id>, "plugin_id": "silo.mdblist", "version": "<version>"}'
-```
+The catalog cannot install this build. When two repositories offer the same
+plugin ID, it shows only the one from Silo's own repository, which is the
+official MDBList plugin, and its **Install** button installs that.
 
-`GET /api/v2/admin/plugins/repositories` lists the repository ID. The call
-needs an unscoped API key owned by an administrator. Uninstalling and
-installing from the catalog also links it, but then the API key has to be
-saved again.
+Silo downloads the binary for its platform and checks its SHA-256. It offers
+updates only from the repository an installation is linked to, so new
+releases of this build appear as updates and the official repository never
+replaces it. Binaries are published for Linux amd64, Linux arm64, and macOS
+arm64.
+
+The same call links an installation uploaded by hand, or installed from the
+official repository. Silo replaces the installation in place, so its ID, the
+saved API key, and its place in each library's provider chain stay.
 
 ## Setup
 
