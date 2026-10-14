@@ -8,6 +8,8 @@ official plugin are listed in its
 
 ## Unreleased
 
+- The README explains how to load `extras/silo-rating-logos.css`: through your
+  reverse proxy or a browser extension, instead of Admin > Appearance.
 - Install from a plugin repository: `index.json` lists each platform binary
   with its SHA-256, so Silo installs the right binary and offers updates.
   Releases generate it and publish it on `main`.

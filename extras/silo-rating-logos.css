@@ -1,8 +1,8 @@
 /*
  * Rating logos for the Silo web app: IMDb and Letterboxd.
  *
- * Paste into Admin > Appearance > custom CSS (setting ui.admin_custom_css).
- * It is stored in the database, so it survives Silo updates.
+ * Load it through your reverse proxy or a user-style browser extension; the
+ * README's "Rating logos" section shows how.
  *
  * Silo writes each rating as a plain-text mark and a score (TMDB alone gets
  * its logo), with nothing in the markup naming the source. These rules go by

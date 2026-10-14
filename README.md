@@ -32,8 +32,8 @@ and show status.
   Rotten Tomatoes as well gives the third slot to Rotten Tomatoes whenever a
   title has that score.
 - **Logos in the web app.** `extras/silo-rating-logos.css` replaces the IMDb
-  and Letterboxd text marks with their official logos (see
-  [Rating logos](#rating-logos)).
+  and Letterboxd text marks with their official logos; your reverse proxy or
+  a browser extension loads it (see [Rating logos](#rating-logos)).
 - **Its own version and links.** It keeps the official plugin ID
   (`silo.mdblist`), so it replaces the official plugin when installed; its
   version ends in `-letterboxd`, and its publisher, source, support and
@@ -236,18 +236,31 @@ saved API key, and its place in each library's provider chain stay.
 
 ## Rating logos
 
-`extras/silo-rating-logos.css` goes into Admin > Appearance > custom CSS. Silo
-stores it in the database, so it survives Silo updates. It replaces the IMDb
-and Letterboxd text marks with their official logos, as tall as TMDB's logo,
-on title pages, the home hero, the Watch Tonight card and the Watch Together
-picker. The logos are embedded in the file, so no request leaves the page;
-the source files are in `extras/logos` and are their owners' trademarks.
+`extras/silo-rating-logos.css` replaces the IMDb and Letterboxd text marks
+with their official logos, as tall as TMDB's logo, on title pages, the home
+hero, the Watch Tonight card and the Watch Together picker. The logos are
+embedded in the file, so no request leaves the page; the source files are in
+`extras/logos` and are their owners' trademarks.
 
 Silo's markup does not name a rating's source, so the CSS goes by position. It
 is right only while Letterboxd is the one rating turned on beyond IMDb and
 TMDB: any other source you turn on gets the Letterboxd logo. A lone text mark
 that could be either keeps its text, and if Silo changes its markup the rules
 stop matching and the text shows again.
+
+### Loading the CSS
+
+Load the file in one of these ways:
+
+- **Your reverse proxy** adds `<link rel="stylesheet" href="/silo-custom/rating-logos.css">`
+  before `</head>` in Silo's page and serves the file at that path. This works
+  for every user and survives Silo updates.
+- **A browser extension** for user styles, such as Stylus, with the file's
+  contents and your Silo address as the site. This works only in browsers where
+  you install it.
+
+With the proxy, Silo's Content-Security-Policy keeps applying: it allows the
+same-origin stylesheet and still blocks scripts.
 
 ## Rate limits, batching and failure behavior
 
