@@ -252,15 +252,59 @@ stop matching and the text shows again.
 
 Load the file in one of these ways:
 
-- **Your reverse proxy** adds `<link rel="stylesheet" href="/silo-custom/rating-logos.css">`
-  before `</head>` in Silo's page and serves the file at that path. This works
-  for every user and survives Silo updates.
+- **Your reverse proxy** serves the file and makes the page load it. This works
+  for every user and survives Silo updates. Stock Caddy can do it with the
+  block below. A proxy that can rewrite responses, such as nginx with
+  `sub_filter`, can instead add
+  `<link rel="stylesheet" href="/silo-custom/rating-logos.css">` before
+  `</head>` in Silo's page.
 - **A browser extension** for user styles, such as Stylus, with the file's
   contents and your Silo address as the site. This works only in browsers where
   you install it.
 
 With the proxy, Silo's Content-Security-Policy keeps applying: it allows the
 same-origin stylesheet and still blocks scripts.
+
+#### Stock Caddy
+
+Silo's page links one stylesheet, `/assets/index-<hash>.css`. Caddy answers
+that URL with two `@import` rules, one for Silo's own file and one for the
+logos, so Silo's HTML and headers stay untouched. Put the CSS at
+`/etc/caddy/silo-custom/rating-logos.css`:
+
+```caddy
+silo.example.com {
+	handle /silo-custom/rating-logos.css {
+		header Cache-Control "no-cache"
+		root * /etc/caddy
+		file_server
+	}
+
+	@main_css {
+		path_regexp ^/assets/index-[A-Za-z0-9_-]+\.css$
+		not query orig=1
+	}
+	handle @main_css {
+		header Content-Type "text/css; charset=utf-8"
+		header Cache-Control "public, max-age=3600"
+		respond * `@import url("{re.main_css.0}?orig=1");
+@import url("/silo-custom/rating-logos.css");
+` 200
+	}
+
+	handle {
+		reverse_proxy silo:8080
+	}
+}
+```
+
+Keep `{re.main_css.0}`: it is the cleaned match, while the raw request path
+would put text from the request into the response. Keep `respond *` too,
+because Caddy reads a body that starts with `@` as a matcher.
+
+Silo marks its stylesheet as cacheable for a year, so a browser that already
+has it shows the logos only after a hard reload or the next Silo build. If a
+Silo build renames the file, the rule stops matching and the text marks return.
 
 ## Rate limits, batching and failure behavior
 
