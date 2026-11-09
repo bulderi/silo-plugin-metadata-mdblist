@@ -2,8 +2,8 @@
   "plugins": [
     {
       "manifest": {
-        "plugin_id": "silo.mdblist",
-        "version": "0.5.0-letterboxd",
+        "plugin_id": "bulderi.mdblist-letterboxd",
+        "version": "0.5.1-letterboxd",
         "silo_api_version": "v1",
         "supported_platforms": [
           {
@@ -115,7 +115,7 @@
           "display_name": "MDBList Ratings",
           "summary": "IMDb, TMDB, Letterboxd, Rotten Tomatoes, Metacritic, Roger Ebert and MyAnimeList ratings, MDBList's own score, age ratings, and missing basics from MDBList.",
           "description_markdown": "Fills in what other metadata providers leave empty: IMDb and TMDB ratings, Letterboxd's rating, the Rotten Tomatoes critic and audience scores, Metacritic's critic and user scores, Roger Ebert's stars, MyAnimeList's score, MDBList's own score, the Common Sense age rating, the release certification, and basics such as year, release date, runtime, language, genres, and show status.\n\nSilo stores every one of these ratings and shows each only after an administrator turns it on under Settings \u003e Library \u0026 Metadata \u003e Ratings. This unofficial build is meant to show Letterboxd only: turn on Letterboxd and leave the others off.\n\nThis provider never identifies an item. It looks up titles that another provider has already matched, using the IMDb or TMDB ID that provider resolved, so it must sit *below* a primary metadata provider such as TMDB in a library's provider chain.",
-          "setup_markdown": "Create a free API key in your MDBList preferences, add it below, then add **MDBList** to a library's metadata provider chain at a lower priority than your primary provider.\n\nThe free tier allows 1000 requests per day. Lookups that arrive together are sent as one batch request, and Silo's hourly Bulk Metadata Enrichment task sends up to 100 titles at a time. When the quota runs out the plugin pauses until it resets and tells Silo so, and Silo looks those titles up again later; it never fails a metadata refresh.",
+          "setup_markdown": "Remove the official MDBList Ratings plugin first, so two plugins do not fetch the same ratings. Then create a free API key in your MDBList preferences, add it below, then add **MDBList** to a library's metadata provider chain at a lower priority than your primary provider.\n\nThe free tier allows 1000 requests per day. Lookups that arrive together are sent as one batch request, and Silo's hourly Bulk Metadata Enrichment task sends up to 100 titles at a time. When the quota runs out the plugin pauses until it resets and tells Silo so, and Silo looks those titles up again later; it never fails a metadata refresh.",
           "homepage_url": "https://mdblist.com",
           "source_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist",
           "support_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/issues",
@@ -126,19 +126,19 @@
         }
       },
       "repo_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist",
-      "checksums_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.0-letterboxd/checksums.txt",
+      "checksums_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.1-letterboxd/checksums.txt",
       "binaries": {
         "darwin/arm64": {
-          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.0-letterboxd/plugin-darwin-arm64",
-          "checksum": "6ce428d9e62b5d7c2b7a4b24837101b76db1cdaceff4c7e3ec34acab9511f004"
+          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.1-letterboxd/plugin-darwin-arm64",
+          "checksum": "5414131fac2251685d0838eae932652e6ba0439743c446df073520a1f0218075"
         },
         "linux/amd64": {
-          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.0-letterboxd/plugin-linux-amd64",
-          "checksum": "bbd0e556e767f6fc73b2f9c2ee9ab4495aa0b3a7ca744416604a37742336e253"
+          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.1-letterboxd/plugin-linux-amd64",
+          "checksum": "da2bb55e40a5430e45b9cdcfa1f8b2563376988145c72b9d2abe313a4f3ff1f7"
         },
         "linux/arm64": {
-          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.0-letterboxd/plugin-linux-arm64",
-          "checksum": "a2e57cdfaeddfae49c87583d2cef0a3a3a7703c04dec0c6f97d43e9d29d020ab"
+          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.1-letterboxd/plugin-linux-arm64",
+          "checksum": "a6289c4fca690ce849766762d2505322d9b3f3c9b81f48f43dc5d9acd7fb092d"
         }
       }
     }
