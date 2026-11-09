@@ -213,7 +213,9 @@ func TestCommittedIndex(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if entry.Manifest.GetPluginId() != current.GetPluginId() {
+	// index.json describes the last release, and the release workflow rewrites
+	// it, so while manifest.json is ahead of it the two may name different plugins.
+	if entry.Manifest.GetVersion() == current.GetVersion() && entry.Manifest.GetPluginId() != current.GetPluginId() {
 		t.Fatalf("index plugin_id = %q, manifest.json has %q", entry.Manifest.GetPluginId(), current.GetPluginId())
 	}
 	base := "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v" + entry.Manifest.GetVersion() + "/"

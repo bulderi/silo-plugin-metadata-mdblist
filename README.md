@@ -34,9 +34,9 @@ and show status.
 - **Logos in the web app.** `extras/silo-rating-logos.css` replaces the IMDb
   and Letterboxd text marks with their official logos; your reverse proxy or
   a browser extension loads it (see [Rating logos](#rating-logos)).
-- **Its own version and links.** It keeps the official plugin ID
-  (`silo.mdblist`), so it replaces the official plugin when installed; its
-  version ends in `-letterboxd`, and its publisher, source, support and
+- **Its own plugin ID, version and links.** Its plugin ID is
+  `bulderi.mdblist-letterboxd`, so Silo lists it separately from the official
+  plugin. Its version ends in `-letterboxd`, and its publisher, source, support and
   changelog links point to this fork. Releases are cut only from a tag you
   push, such as `v0.5.0-letterboxd`.
 - **Its own plugin repository.** Silo installs and updates it from this
@@ -191,38 +191,35 @@ be told apart from unrated; fixing it needs nullable rating fields host side.
    https://raw.githubusercontent.com/bulderi/silo-plugin-metadata-mdblist/main/index.json
    ```
 
-2. Install this build from that repository through the admin API:
-
-   ```sh
-   curl -X POST "$SILO_URL/api/v2/admin/plugins/installations" \
-     -H "Authorization: Bearer $SILO_ADMIN_API_KEY" -H "Content-Type: application/json" \
-     -d '{"repository_id": "<id>", "plugin_id": "silo.mdblist", "version": "0.5.0-letterboxd"}'
-   ```
-
-   `GET /api/v2/admin/plugins/repositories` lists the repository ID. The API
-   takes it as a string, and the call needs an unscoped API key owned by an
-   administrator.
-
-The catalog cannot install this build. When two repositories offer the same
-plugin ID, it shows only the one from Silo's own repository, which is the
-official MDBList plugin, and its **Install** button installs that.
+2. If the official **MDBList Ratings** plugin is installed, remove it first.
+   Both plugins declare the same rating sources, so run only one of them.
+3. On the **Catalog** tab, find **MDBList Ratings** by bulderi under **Other
+   sources** and click **Install**.
 
 Silo downloads the binary for its platform and checks its SHA-256. It offers
-updates only from the repository an installation is linked to, so new
-releases of this build appear as updates and the official repository never
-replaces it. Binaries are published for Linux amd64, Linux arm64, and macOS
-arm64.
+updates from the repository an installation is linked to, so new releases of
+this build appear as updates. Binaries are published for Linux amd64, Linux
+arm64, and macOS arm64.
 
-The same call links an installation uploaded by hand, or installed from the
-official repository. Silo replaces the installation in place, so its ID, the
-saved API key, and its place in each library's provider chain stay.
+### Moving from a build with the ID `silo.mdblist`
+
+Before 0.5.1-letterboxd this build used the official plugin's ID, so Silo
+treats this version as a new plugin and does not update the old one:
+
+1. Remove the installed `silo.mdblist` plugin.
+2. Install this one from the catalog, as above.
+3. Paste your MDBList API key into its settings again.
+4. Check its place in each library's metadata provider chain, as under
+   [Setup](#setup).
+
+Ratings already stored stay, because Silo keeps them per rating source and not
+per plugin.
 
 ## Setup
 
 1. Create an API key in your [MDBList](https://mdblist.com) preferences.
-2. Install the plugin as described under [Install](#install). If the official
-   MDBList plugin or another plugin with the ID `silo.mdblist` is installed,
-   this one replaces it.
+2. Install the plugin as described under [Install](#install), after removing
+   the official MDBList plugin if it is installed.
 3. Paste the key into the plugin's settings. Without a key the plugin stays
    idle and contributes nothing.
 4. Check that **MDBList** sits in each movie and series library's metadata

@@ -6,8 +6,12 @@ plus `-letterboxd`; each release is tagged `v<version>`. Changes to the
 official plugin are listed in its
 [releases](https://github.com/Silo-Server/silo-plugin-metadata-mdblist/releases).
 
-## Unreleased
+## 0.5.1-letterboxd — 2026-11-09
 
+- The plugin ID is now `bulderi.mdblist-letterboxd`, so Silo lists this build
+  under **Other sources** and installs it from the catalog. Silo treats it as a
+  new plugin: follow "Moving from a build with the ID `silo.mdblist`" in the
+  README.
 - The README explains how to load `extras/silo-rating-logos.css`: through your
   reverse proxy, with a block for stock Caddy, or a browser extension, instead
   of Admin > Appearance.

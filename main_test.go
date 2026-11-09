@@ -752,7 +752,7 @@ func TestManifestContract(t *testing.T) {
 		t.Fatalf("LoadWithChecksum() returned error: %v", err)
 	}
 
-	if got, want := manifest.GetPluginId(), "silo.mdblist"; got != want {
+	if got, want := manifest.GetPluginId(), "bulderi.mdblist-letterboxd"; got != want {
 		t.Fatalf("plugin_id = %q, want %q", got, want)
 	}
 	if got := manifest.GetChecksum(); got == "" || got == "__CHECKSUM__" {
