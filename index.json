@@ -3,7 +3,7 @@
     {
       "manifest": {
         "plugin_id": "bulderi.mdblist-letterboxd",
-        "version": "0.5.2-letterboxd",
+        "version": "0.5.2-letterboxd.1",
         "silo_api_version": "v1",
         "supported_platforms": [
           {
@@ -134,30 +134,30 @@
         }
       },
       "repo_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist",
-      "checksums_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-letterboxd/checksums.txt",
+      "checksums_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-letterboxd.1/checksums.txt",
       "binaries": {
         "darwin/arm64": {
-          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-letterboxd/plugin-darwin-arm64",
-          "checksum": "daba13cebca901bd7d96b2c82fbd27695e5c940355a8ecdab00f330f5a88f6ce"
+          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-letterboxd.1/plugin-darwin-arm64",
+          "checksum": "cda119c7e466dbbfc4195efa34a83a736f6804589653cdca87eb2c84e089f205"
         },
         "freebsd/amd64": {
-          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-letterboxd/plugin-freebsd-amd64",
-          "checksum": "a5736375ff424830c2253f1112282e924e1187b0390f7407e306d044b11e8b4d"
+          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-letterboxd.1/plugin-freebsd-amd64",
+          "checksum": "2252391fe24824bcbc2fa7bbb0e4eeb87dff638ec97f5417b5d9ba9bf8eee866"
         },
         "freebsd/arm64": {
-          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-letterboxd/plugin-freebsd-arm64",
-          "checksum": "fc096c49ba23cff07b1b90c410b0f6f968b886643d20b03b1ec94ba8f9ffa0ec"
+          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-letterboxd.1/plugin-freebsd-arm64",
+          "checksum": "0335ed9cb8908b8eca1b3f78a1b155693d3aff417c76cb05f988ba6d7a893ec7"
         },
         "linux/amd64": {
-          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-letterboxd/plugin-linux-amd64",
-          "checksum": "c5d7113cb6d5624af3d4cd91cfb4ea9519165ee70d618e161dec489a8d8f3a80"
+          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-letterboxd.1/plugin-linux-amd64",
+          "checksum": "6a68c772bef4f1c23d77657729cd3467e267ffd47b7f578ed3685ae8c15367cd"
         },
         "linux/arm64": {
-          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-letterboxd/plugin-linux-arm64",
-          "checksum": "d08a833d8384c3384081a843b9788bffe9b4d2f720a864df125324e6b664c685"
+          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-letterboxd.1/plugin-linux-arm64",
+          "checksum": "10eb1e055f9c395f02e5f726ed964c4849b9a457d56ee321b0f119e5ce9eead7"
         }
       },
-      "bundle_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-letterboxd/plugin.sigstore.json"
+      "bundle_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-letterboxd.1/plugin.sigstore.json"
     }
   ]
 }
