@@ -1,269 +1,152 @@
-# Silo MDBList plugin (unofficial Letterboxd build)
+# MDBList ratings plugin for Silo (Letterboxd build)
 
-This is an unofficial fork of
-[Silo-Server/silo-plugin-metadata-mdblist](https://github.com/Silo-Server/silo-plugin-metadata-mdblist),
-based on its
-[0.5.2](https://github.com/Silo-Server/silo-plugin-metadata-mdblist/releases/tag/v0.5.2).
-It is not affiliated with Silo, MDBList or any rating service. The plugin
-fetches ratings with your own MDBList API key; the rating services' terms
-apply to how you use them.
+> [!WARNING]
+> This is an unofficial fork of the official
+> [MDBList plugin](https://github.com/Silo-Server/silo-plugin-metadata-mdblist),
+> not made or endorsed by Silo, MDBList, or any rating service. It fetches
+> ratings with your own MDBList API key, and the rating services' terms apply
+> to how you use them.
 
-Like the official plugin, it fills in what other metadata providers leave
-empty: ratings, the release certification, the Common Sense Media minimum
-age, and basic facts such as year, release date, runtime, language, genres,
-and show status.
+Adds Letterboxd ratings to Silo's title pages, and stores every other rating
+MDBList has, from the IMDb or TMDB ID your primary metadata provider already
+matched. It runs below TMDB in a library's metadata provider chain and fills
+only what TMDB left empty.
 
-## What this fork changes
+## Ratings
 
-- **Stores every rating MDBList has except Trakt's.** Besides IMDb, TMDB,
-  Rotten Tomatoes critics and audience and MDBList's own score, which the
-  official 0.5.2 keeps, it keeps Letterboxd, Metacritic critics and users,
-  Roger Ebert and MyAnimeList, which the official plugin drops. Trakt's rating
-  stays out: Trakt has blocked MDBList's API access, so MDBList's figure is
-  stale or missing, and Silo keeps at most eight declared rating sources per
-  capability, which these fill.
-- **Shows Letterboxd on title pages.** With Letterboxd turned on, a title
-  page lists IMDb, TMDB and Letterboxd (shown out of 5, like
-  `Letterboxd 4.0`), each only when the title has that score. Turn on **only
-  Letterboxd**: the other ratings are stored but stay hidden while they are
-  off. A title page shows at most three ratings, in the order sources are
-  declared. Letterboxd is this plugin's first declaration, but Silo's built-in
-  NFO provider declares Rotten Tomatoes ahead of every plugin, so turning on
-  Rotten Tomatoes as well gives the third slot to Rotten Tomatoes whenever a
-  title has that score.
-- **Logos in the web app.** `extras/silo-rating-logos.css` replaces the IMDb
-  and Letterboxd text marks with their official logos; your reverse proxy or
-  a browser extension loads it (see [Rating logos](#rating-logos)).
-- **Its own plugin ID, version and links.** Its plugin ID is
-  `bulderi.mdblist-letterboxd`, so Silo lists it separately from the official
-  plugin. Its version ends in `-letterboxd`, and its publisher, source, support and
-  changelog links point to this fork. Releases are cut only from a tag you
-  push, such as `v0.5.0-letterboxd`.
-- **Its own plugin repository.** Silo installs and updates it from this
-  fork's `index.json` (see [Install](#install)).
+| Rating | Scale | Official plugin |
+|---|---|---|
+| IMDb | 10 | Yes |
+| TMDB | 10 | Yes |
+| **Letterboxd** | 5, like `Letterboxd 4.0` | No |
+| Rotten Tomatoes critics | % | Yes |
+| Rotten Tomatoes audience | % | Yes |
+| Metacritic critics (Metascore) | 100 | No |
+| Metacritic users | 10 | No |
+| Roger Ebert | 4 stars | No |
+| MyAnimeList | 10 | No |
+| MDBList score | 100 | Yes |
 
-## Requirements
+A title page shows IMDb and TMDB, then the ratings an administrator turns on
+under **Settings > Library & Metadata > Ratings**, each only when the title has
+it. The others are stored and stay hidden. Trakt's rating is left out: Trakt
+has blocked MDBList's API access, so MDBList's figure is stale or missing.
 
-Showing Letterboxd needs a Silo server with plugin-declared rating sources,
-merged into Silo's `main` on 2026-10-01 (in the `latest` Docker image built
-from it):
+The plugin also fills in the release certification, the Common Sense Media
+minimum age, and year, release date, runtime (movies only), original language,
+genres, and show status.
 
-- [Silo-Server/silo-server#1697](https://github.com/Silo-Server/silo-server/pull/1697)
-  gives title pages one list of ratings, IMDb and TMDB plus the sources an
-  administrator turns on;
-- [Silo-Server/silo-server#1698](https://github.com/Silo-Server/silo-server/pull/1698)
-  lets metadata plugins declare their rating sources and adds the switches
-  under Settings > Library & Metadata > Ratings.
+## How it differs from the official plugin
 
-On a Silo server without them, the plugin installs and fills the same fields,
-and Silo stores these per-source ratings from its own fixed list of sources.
-Clients show what they show today (IMDb, and Rotten Tomatoes from its flat
-columns on the web and in poster badges) but none of the other ratings; there
-are no Ratings switches, and the logo CSS matches nothing. Nothing breaks, and
-the ratings are already stored when the server is updated.
+Checked against the official 0.5.2.
 
-## Why it has to sit below a primary provider
-
-This plugin never identifies an item. It has no search: `Search` returns zero
-results by design, even though MDBList has a `/search` endpoint. It only looks
-up titles that another provider has already matched, using the IMDb or TMDB ID
-that provider resolved.
-
-Silo runs a library's metadata providers as a priority-ordered chain and merges
-the results fill-empty, so the first provider to supply a field keeps it. Put a
-primary provider — TMDB — above MDBList. The primary resolves identity and
-fills the bulk of the record; MDBList then adds the ratings columns the primary
-had nothing for.
-
-Given no IMDb or TMDB ID in the request, the plugin returns an empty result. It
-does not guess, and it does not fall back to searching.
-
-## What it maps
-
-| MDBList | Silo |
-| --- | --- |
-| `ratings[source=imdb]` | `rating_imdb` (0-10) |
-| `ratings[source=tmdb]` | `rating_tmdb` (0-10) |
-| `ratings[source=tomatoes]` | `rating_rt_critic` (0-100) |
-| `ratings[source=popcorn\|tomatoesaudience\|audience]` | `rating_rt_audience` (0-100) |
-| every source above plus Letterboxd, Metacritic, Roger Ebert and MyAnimeList, and the top-level `score` | `ratings.sources` (0-100 with vote counts; see below) |
-| `certification` | content rating |
-| `age_rating` + `commonsense` | `advisory_age` / `advisory_source` |
-| `year` | year |
-| `released` | release date (movies) or first air date (shows) |
-| `runtime` | runtime (movies only; a show's figure is not per episode) |
-| `language` | original language |
-| `genres` | genres |
-| `status` | show status (shows only; the host normalises the spelling) |
-
-Silo merges a library's providers fill-empty, so every one of these only lands
-where the primary provider left a blank. Genres go to whichever provider
-supplies them first.
-
-Keywords and countries are not sent. Silo adds list fields from every provider
-together instead of filling a blank, so MDBList's would be added to TMDB's on
-every title. Its keywords are slugs (`parent-child-relationship` next to TMDB's
-`parent child relationship`) mixed with MDBList's own tags such as
-`has-trailer` and `2k-blu-ray`: 0.3.0 appended about 24 of them per title.
-
-Nothing else. The plugin maps no titles, overviews, taglines, artwork, trailers
-or external IDs. MDBList's text is English only and would override the
-library's language wherever the primary provider left a blank. The host keeps
-every provider's trailers, so MDBList's would duplicate TMDB's. And an
-enrichment-only provider must not hand the host identity it did not verify, so
-MDBList's `ids` object is read only to match batch answers to requests.
-
-MDBList reports each rating twice: `value` on the source's own scale and
-`score` normalised to 0-100. The scales are not uniform — IMDb's `value` is out
-of 10, TMDB's, Rotten Tomatoes' and Metacritic's are out of 100, Letterboxd's
-is doubled to 10 and Roger Ebert's is out of 4 stars — so `score` is the input
-wherever it is present, and the per-source conversion is pinned to
-`provider/testdata/movie_jaws.json`.
-
-### Per-source ratings
-
-Alongside the four flat keys, the ratings Struct carries a `sources` object:
-
-```json
-{
-  "imdb": 8.1, "tmdb": 7.6, "rt_critic": 97,
-  "sources": {
-    "imdb":       {"score": 81, "votes": 673852},
-    "tmdb":       {"score": 76, "votes": 10114},
-    "rt_critic":  {"score": 97, "votes": 102},
-    "letterboxd": {"score": 80, "votes": 876082},
-    "metacritic": {"score": 87, "votes": 21},
-    "rogerebert": {"score": 100},
-    "mdblist":    {"score": 86}
-  }
-}
-```
-
-Keys are `imdb`, `tmdb`, `letterboxd`, `rt_critic`, `rt_audience`,
-`metacritic`, `metacritic_user`, `rogerebert`, `myanimelist` and `mdblist`.
-Every `score` is 0-100; `votes` is omitted when MDBList has no count. Silo servers
-that predate per-source storage read only number-valued keys and skip
-`sources`, so the plugin sends it to every server version.
-
-With Silo-Server/silo-server#1698, Silo names IMDb and TMDB itself and keeps
-any other key only if the capability declares it, so the manifest lists the
-other eight under `capabilities[0].metadata.rating_sources`, Letterboxd first,
-each with the short name clients show beside the score, a label, and its scale
-(Letterboxd 5, so a stored 80 shows as `4.0`; Roger Ebert 4; Metacritic users
-and MyAnimeList 10; the rest 100). Eight is the most Silo keeps per
-capability. A server that predates `rating_sources` ignores the declaration
-and keeps the keys it knows from its own fixed list, which includes all of
-these.
-
-The Common Sense age has no typed field in the plugin API, so it rides in the
-free-form metadata map under `advisory_age` and `advisory_source`, which the
-host reads.
-
-## Known limitations
-
-**Requires a Silo server that reads `lookup_provider_ids`.** Silo used to call
-a metadata provider only when the item carried an ID of the provider's own,
-which an enrichment-only provider never has. The manifest now declares
-`capabilities[0].metadata.lookup_provider_ids: ["imdb", "tmdb"]`, and servers
-that understand the key call this plugin whenever the item carries either ID.
-An older server ignores the key; the plugin then installs and configures but
-contributes nothing.
-
-**Reports failures as errors, which older servers log as warnings.** The
-manifest also declares `bulk_lookup_limit: 100`, which opts the plugin into
-Silo's bulk enrichment pass, and the plugin reports a spent quota, an outage or
-a missing key as a gRPC error rather than an empty item (see below). Servers
-with the pass log those errors at debug level. An older server logs one warning
-per item it looks up while no key is saved, the key is rejected, the quota is
-spent, or MDBList is down, and otherwise behaves as before.
-
-A genuine 0% Rotten Tomatoes score is reported as "no score". Zero is the
-absent sentinel in the host's rating merge and columns, so it cannot currently
-be told apart from unrated; fixing it needs nullable rating fields host side.
+- **More ratings.** It stores Letterboxd, Metacritic critics and users, Roger
+  Ebert, and MyAnimeList as well, and declares eight rating sources to Silo,
+  Letterboxd first. The official plugin declares three: the two Rotten Tomatoes
+  scores and MDBList's.
+- **Rating logos.** `extras/silo-rating-logos.css` shows the IMDb and
+  Letterboxd logos in the web app (see [Rating logos](#rating-logos)).
+- **Its own plugin.** Its plugin ID is `bulderi.mdblist-letterboxd`, its
+  version ends in `-letterboxd`, and its links point to this fork, so Silo
+  lists it under **Other sources**, separately from the official plugin.
+- **Its own releases.** Silo installs and updates it from this repository's
+  `index.json`. Releases are signed by this repository's workflow instead of
+  Silo's shared release workflow.
+- **A newer SDK.** It builds against `silo-plugin-sdk` v0.24.0 and starts
+  through the SDK's manifest bootstrap; the official 0.5.2 uses v0.16.1.
 
 ## Install
 
 1. In Silo, open the administrator **Plugins** page, select **Catalog**, and
-   click **Add repository**. Name it, for example, **MDBList (Letterboxd
-   build)**, and use this URL:
+   click **Add repository** with this URL:
 
    ```text
    https://raw.githubusercontent.com/bulderi/silo-plugin-metadata-mdblist/main/index.json
    ```
 
-2. If the official **MDBList Ratings** plugin is installed, remove it first.
-   Both plugins declare the same rating sources, so run only one of them.
-3. On the **Catalog** tab, find **MDBList Ratings** by bulderi under **Other
-   sources** and click **Install**.
+2. If the official **MDBList Ratings** plugin is installed, remove it. Both
+   declare the same rating sources, so run only one.
+3. Find **MDBList Ratings** by bulderi under **Other sources** and click
+   **Install**.
 
-Silo downloads the binary for its platform and checks its SHA-256 and its
-signature (see [Signed releases](#signed-releases)). It offers
-updates from the repository an installation is linked to, so new releases of
-this build appear as updates. Binaries are published for Linux amd64, Linux
-arm64, macOS arm64, FreeBSD amd64, and FreeBSD arm64.
+New releases show up as updates in Silo. Binaries are published for Linux
+amd64, Linux arm64, macOS arm64, FreeBSD amd64, and FreeBSD arm64.
 
 ### Moving from a build with the ID `silo.mdblist`
 
 Before 0.5.1-letterboxd this build used the official plugin's ID, so Silo
-treats this version as a new plugin and does not update the old one:
+treats the current one as a new plugin:
 
 1. Remove the installed `silo.mdblist` plugin.
 2. Install this one from the catalog, as above.
 3. Paste your MDBList API key into its settings again.
-4. Check its place in each library's metadata provider chain, as under
-   [Setup](#setup).
+4. Check its place in each library's provider chain, as under [Setup](#setup).
 
-Ratings already stored stay, because Silo keeps them per rating source and not
-per plugin.
+Ratings already stored stay, because Silo keeps them per rating source, not per
+plugin.
 
 ## Setup
 
 1. Create an API key in your [MDBList](https://mdblist.com) preferences.
-2. Install the plugin as described under [Install](#install), after removing
-   the official MDBList plugin if it is installed.
-3. Paste the key into the plugin's settings. Without a key the plugin stays
-   idle and contributes nothing.
-4. Check that **MDBList** sits in each movie and series library's metadata
-   provider chain *below* the primary provider. Silo usually adds it there on
-   install from the manifest's default priority.
-5. Turn on **Letterboxd**, and only Letterboxd, under Settings > Library &
-   Metadata > Ratings (needs the Silo changes under
-   [Requirements](#requirements)).
-6. Run **Bulk Metadata Enrichment** under the admin's scheduled tasks, or wait
+2. Paste it into the plugin's settings. Without a key the plugin stays idle.
+3. Check that **MDBList** sits *below* the primary provider, such as TMDB, in
+   each movie and series library's metadata provider chain. Silo usually puts
+   it there on install.
+4. Turn on **Letterboxd**, and only Letterboxd, under **Settings > Library &
+   Metadata > Ratings**.
+5. Run **Bulk Metadata Enrichment** under the admin's scheduled tasks, or wait
    for its hourly run, to look up the titles already in your libraries.
+
+## Good to know
+
+- **Turn on only Letterboxd.** A title page shows at most three ratings: IMDb,
+  TMDB, then the turned-on sources in declaration order. Silo's built-in NFO
+  provider comes first and declares Rotten Tomatoes, Metacritic, Trakt, and
+  TheTVDB ahead of Letterboxd, so turning on any of them can push Letterboxd
+  off the page. The logo CSS assumes Letterboxd is the only one, too.
+- **It never identifies a title.** It looks titles up by the IMDb or TMDB ID
+  another provider matched, and returns nothing without one. Its search always
+  returns no results.
+- **It only fills blanks.** Silo keeps the first provider's value for each
+  field. Keywords and countries are never sent, because Silo adds list fields
+  from every provider together instead of filling a blank.
+- **The free tier goes a long way.** MDBList allows 1000 requests a day for
+  free. Lookups that arrive together go out as one request for up to 100
+  titles.
+- **A spent quota pauses the plugin, not Silo.** It stops asking MDBList until
+  the quota resets (00:00 UTC for the daily quota), and Silo looks those titles
+  up again later. A metadata refresh never fails because of MDBList.
+- **A 0% Rotten Tomatoes score shows as no score.** Silo treats zero as unrated.
+- **Showing Letterboxd needs a Silo server from 2026-10-01 or later** (the
+  `latest` image). An older server stores the ratings but shows only IMDb and
+  Rotten Tomatoes.
 
 ## Rating logos
 
-`extras/silo-rating-logos.css` replaces the IMDb and Letterboxd text marks
-with their official logos, as tall as TMDB's logo, on title pages, the home
-hero, the Watch Tonight card and the Watch Together picker. The logos are
-embedded in the file, so no request leaves the page; the source files are in
+`extras/silo-rating-logos.css` replaces the IMDb and Letterboxd text marks with
+their official logos, as tall as TMDB's, on title pages, the home hero, the
+Watch Tonight card, and the Watch Together picker. The logos are embedded in
+the file, so no request leaves the page; the source files are in
 `extras/logos` and are their owners' trademarks.
 
-Silo's markup does not name a rating's source, so the CSS goes by position. It
-is right only while Letterboxd is the one rating turned on beyond IMDb and
-TMDB: any other source you turn on gets the Letterboxd logo. A lone text mark
-that could be either keeps its text, and if Silo changes its markup the rules
-stop matching and the text shows again.
-
-### Loading the CSS
+Silo's markup does not name a rating's source, so the CSS goes by position:
+any other rating you turn on gets the Letterboxd logo. A lone text mark that
+could be either keeps its text, and if Silo changes its markup, the text shows
+again.
 
 Load the file in one of these ways:
 
-- **Your reverse proxy** serves the file and makes the page load it. This works
-  for every user and survives Silo updates. Stock Caddy can do it with the
-  block below. A proxy that can rewrite responses, such as nginx with
-  `sub_filter`, can instead add
-  `<link rel="stylesheet" href="/silo-custom/rating-logos.css">` before
-  `</head>` in Silo's page.
+- **Your reverse proxy** serves the file and makes the page load it, for every
+  user and across Silo updates. Stock Caddy can do it with the block below. A
+  proxy that rewrites responses, such as nginx with `sub_filter`, can instead
+  add `<link rel="stylesheet" href="/silo-custom/rating-logos.css">` before
+  `</head>`. Silo's Content-Security-Policy still applies: it allows the
+  same-origin stylesheet and blocks scripts.
 - **A browser extension** for user styles, such as Stylus, with the file's
-  contents and your Silo address as the site. This works only in browsers where
+  contents and your Silo address as the site. It works only in browsers where
   you install it.
 
-With the proxy, Silo's Content-Security-Policy keeps applying: it allows the
-same-origin stylesheet and still blocks scripts.
-
-#### Stock Caddy
+### Stock Caddy
 
 Silo's page links one stylesheet, `/assets/index-<hash>.css`. Caddy answers
 that URL with two `@import` rules, one for Silo's own file and one for the
@@ -304,33 +187,101 @@ Silo marks its stylesheet as cacheable for a year, so a browser that already
 has it shows the logos only after a hard reload or the next Silo build. If a
 Silo build renames the file, the rule stops matching and the text marks return.
 
-## Rate limits, batching and failure behavior
+---
 
-MDBList meters requests per day: 1000 on the free tier, then 10k, 25k, 100k and
-250k by paid tier, resetting at 00:00 UTC. Every tier is also capped at 1000
-reads per fixed five-minute window.
+## For developers
 
-- **Batching.** Silo asks for one item at a time but runs several match workers
-  at once, and its hourly Bulk Metadata Enrichment task keeps 100 lookups in
-  flight (the manifest's `bulk_lookup_limit`). Lookups for the same route (IMDb
-  or TMDB, movie or show) that arrive within 250 ms of each other go out as one
-  request to MDBList's batch endpoint, up to 100 IDs. A lookup with no partner uses the ordinary
-  single-title request. If MDBList refuses a batch, the plugin retries it in
-  halves; when both halves go through, it remembers the smaller limit for that
-  route. TMDB IDs are preferred over IMDb IDs for lookups because the batch
-  endpoint's schema types IDs as integers.
-- **Quota pause.** When MDBList answers 429, the plugin stops sending requests
-  until `Retry-After` (or, for the daily quota, until 00:00 UTC). When a
-  successful answer reports `X-RateLimit-Remaining: 0`, it pauses until
-  `X-RateLimit-Reset` without spending another request. Saving a different API
-  key lifts the pause.
+- **Plugin ID:** `bulderi.mdblist-letterboxd`
+- **Capability:** `metadata_provider.v1`, id `mdblist`, with
+  `lookup_provider_ids: ["imdb", "tmdb"]` and `bulk_lookup_limit: 100`
+- Builds against `silo-plugin-sdk` v0.24.0 and starts through
+  `runtime.ServeManifestWithOptions`, which validates the manifest, stamps the
+  version and the binary's checksum, and answers `plugin manifest`.
+- Showing declared rating sources needs
+  [Silo-Server/silo-server#1697](https://github.com/Silo-Server/silo-server/pull/1697)
+  and [#1698](https://github.com/Silo-Server/silo-server/pull/1698). A server
+  that ignores `lookup_provider_ids` never calls the plugin, and one without
+  the bulk enrichment pass logs a warning per lookup while the key is missing
+  or rejected, the quota is spent, or MDBList is down.
+
+### What it maps
+
+| MDBList | Silo |
+| --- | --- |
+| `ratings[source=imdb]` | `rating_imdb` (0-10) |
+| `ratings[source=tmdb]` | `rating_tmdb` (0-10) |
+| `ratings[source=tomatoes]` | `rating_rt_critic` (0-100) |
+| `ratings[source=popcorn\|tomatoesaudience\|audience]` | `rating_rt_audience` (0-100) |
+| every source above plus Letterboxd, Metacritic, Roger Ebert and MyAnimeList, and the top-level `score` | `ratings.sources` (0-100 with vote counts) |
+| `certification` | content rating |
+| `age_rating` + `commonsense` | `advisory_age` / `advisory_source` |
+| `year` | year |
+| `released` | release date (movies) or first air date (shows) |
+| `runtime` | runtime (movies only; a show's figure is not per episode) |
+| `language` | original language |
+| `genres` | genres |
+| `status` | show status (shows only; the host normalises the spelling) |
+
+Nothing else. Titles, overviews, taglines, artwork, trailers, and external IDs
+belong to the primary provider: MDBList's text is English only, the host keeps
+every provider's trailers, and an enrichment-only provider must not hand the
+host identity it did not verify. MDBList's `ids` object is read only to match
+batch answers to requests. Its keywords are slugs mixed with MDBList's own
+tags, such as `has-trailer` and `2k-blu-ray`.
+
+MDBList reports each rating twice: `value` on the source's own scale and
+`score` normalised to 0-100. The scales are not uniform (IMDb's `value` is out
+of 10, TMDB's, Rotten Tomatoes' and Metacritic's out of 100, Letterboxd's
+doubled to 10, Roger Ebert's out of 4), so `score` is the input wherever it is
+present, and the per-source conversion is pinned to
+`provider/testdata/movie_jaws.json`.
+
+The ratings Struct carries the four flat keys plus a `sources` object:
+
+```json
+{
+  "imdb": 8.1, "tmdb": 7.6, "rt_critic": 97,
+  "sources": {
+    "imdb":       {"score": 81, "votes": 673852},
+    "tmdb":       {"score": 76, "votes": 10114},
+    "rt_critic":  {"score": 97, "votes": 102},
+    "letterboxd": {"score": 80, "votes": 876082},
+    "metacritic": {"score": 87, "votes": 21},
+    "rogerebert": {"score": 100},
+    "mdblist":    {"score": 86}
+  }
+}
+```
+
+Keys are `imdb`, `tmdb`, `letterboxd`, `rt_critic`, `rt_audience`,
+`metacritic`, `metacritic_user`, `rogerebert`, `myanimelist`, and `mdblist`.
+Every `score` is 0-100, and `votes` is omitted when MDBList has no count. Silo
+names IMDb and TMDB itself and keeps another key only if the capability
+declares it under `rating_sources`, with the short name clients show, a label,
+and its scale. Eight is the most Silo keeps per capability. Servers that
+predate per-source storage skip `sources`. The Common Sense age rides in the
+free-form metadata map under `advisory_age` and `advisory_source`.
+
+### Rate limits and failures
+
+MDBList meters requests per day (1000 free, then 10k, 25k, 100k, and 250k by
+paid tier, resetting at 00:00 UTC) and caps every tier at 1000 reads per fixed
+five-minute window.
+
+- **Batching.** Lookups for the same route (IMDb or TMDB, movie or show) that
+  arrive within 250 ms go out as one request to MDBList's batch endpoint, up to
+  100 IDs. A lookup with no partner uses the single-title request. If MDBList
+  refuses a batch, the plugin retries it in halves and, when both halves go
+  through, remembers the smaller limit for that route. TMDB IDs are preferred
+  because the batch endpoint's schema types IDs as integers.
+- **Quota pause.** After a 429 the plugin sends nothing until `Retry-After`,
+  or 00:00 UTC for the daily quota. After `X-RateLimit-Remaining: 0` it pauses
+  until `X-RateLimit-Reset`. Saving a different API key lifts the pause.
 - **Pacing.** A client-side limiter keeps requests at three a second, under the
   five-minute cap.
 
-A metadata refresh never fails because of MDBList: Silo continues past a
-provider's error. A title MDBList does not know is an empty answer. Every other
-failure is a gRPC status, so Silo can tell "nothing to find" from "ask again
-later" and its bulk pass does not file a paused lookup as a title with no data:
+A title MDBList does not know is an empty answer. Every other failure is a gRPC
+status, so Silo can tell "nothing to find" from "ask again later":
 
 | Failure | Status |
 |---|---|
@@ -341,41 +292,39 @@ later" and its bulk pass does not file a paused lookup as a title with no data:
 | MDBList refused or garbled one title's answer, including an error body | `INTERNAL` |
 
 The plugin logs each failed request, and a quota pause once when it begins. It
-does not log a missing key: it simply stays idle until one is saved.
+does not log a missing key.
 
-## Building
+### Build and test
 
 ```sh
-make build        # host platform
-make build-all    # linux/amd64, linux/arm64, darwin/arm64, freebsd/amd64, freebsd/arm64
+make test        # go test -race ./...
+make build       # host platform
+make build-all   # dist/ binaries for linux/amd64, linux/arm64, darwin/arm64, freebsd/amd64, freebsd/arm64
 ```
 
-The build takes its version from `manifest.json` (for example
-`0.5.0-letterboxd`), so Silo's plugin admin shows which build is installed.
-The plugin starts through the SDK's manifest bootstrap
-(`runtime.ServeManifestWithOptions`), which validates the manifest, stamps the
-version and the binary's checksum, and answers `plugin manifest`.
+The build takes its version from `manifest.json`, so Silo's plugin admin shows
+which build is installed. [CONTRIBUTING.md](CONTRIBUTING.md) lists the checks
+to run before a pull request.
 
-To release, bump `version` in `manifest.json`, add the changes to
-[CHANGELOG.md](CHANGELOG.md), and push a matching tag (`v0.5.1-letterboxd`);
-there is no automatic version bump. The release workflow runs the CI checks,
-builds every platform, signs the binaries with a GitHub build provenance
-attestation, and publishes them with `checksums.txt`, the signature bundle
+### Release
+
+Bump `version` in `manifest.json`, add the changes to
+[CHANGELOG.md](CHANGELOG.md), and push a matching tag, `v` plus the version;
+there is no automatic version bump. The release workflow takes the release
+notes from the version's CHANGELOG section, runs the CI checks, builds every
+platform, signs the binaries with a GitHub build provenance attestation, and
+publishes them with `checksums.txt`, the signature bundle
 `plugin.sigstore.json`, and `index.json`, written by `cmd/genindex`. It then
 commits that `index.json` to `main`, which is the file the install URL serves.
-[CONTRIBUTING.md](CONTRIBUTING.md) lists the checks to run first.
 
 Silo compares versions segment by segment and compares a segment with the
 suffix as text, so it would rank `0.5.10-letterboxd` below `0.5.9-letterboxd`
 and offer no update. Move to the next minor version instead of a two-digit
 patch.
 
-### Signed releases
-
-Each release from 0.5.2-letterboxd on is signed. Silo servers that check
-plugin signatures verify that this repository's release workflow built the
-binary from the version's tag, and show the installation as verified. To check
-a download yourself:
+Each release from 0.5.2-letterboxd on is signed. Silo verifies that this
+repository's release workflow built the binary from the version's tag and shows
+the installation as verified. To check a download yourself:
 
 ```sh
 gh attestation verify plugin-linux-amd64 \
@@ -383,7 +332,7 @@ gh attestation verify plugin-linux-amd64 \
   --source-ref refs/tags/v<version>
 ```
 
-## Keeping up with the official plugin
+### Keeping up with the official plugin
 
 This fork is the official plugin plus its own commits: the plugin changes, the
 logo CSS, the install index and its release tooling, and the index commits the
@@ -398,3 +347,10 @@ GOWORK=off go test -race ./...
 git push --force-with-lease origin main
 ```
 
+## Contributing
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+
+## License
+
+AGPL-3.0-only.
