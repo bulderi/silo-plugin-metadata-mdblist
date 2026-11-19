@@ -40,24 +40,17 @@ UNICODES = range(0x20, 0x7F)
 TRACKING_EM = -0.025
 # TMDB's logo height: 10px beside 13px title-page marks, 8px beside 12px small ones (ss01).
 HEIGHTS = {"": 10 / 13, ".sm": 8 / 12}
-# Compact icons (at most 1.5 times as wide as tall) look smaller than wordmarks of the same height,
-# so they draw 14px and 11px tall: still inside the marks' 16.4px and 15.1px line boxes.
+# Compact icons look small at TMDB's height, so they draw taller, inside the 16.4px and 15.1px lines.
 ICON_HEIGHTS = {"": 14 / 13, ".sm": 11 / 12}
 ICON_MAX_ASPECT = 1.5
+# Names drawn as a logo and the rest of the name: name -> (the part the logo replaces, logo).
+LABELLED = {"RT Audience": ("RT", "rt"), "MC Users": ("MC", "metacritic")}
 
 # Letterboxd's decal (extras/logos/letterboxd-decal-dots-pos-rgb.svg), dots group coordinates.
 LB_HEIGHT = 140
 LB_WIDTH = 378
 LB_CY = LB_R = 69.9732824
 LB_RX = 70.0786517
-LB_OVERLAPS = [
-    "M129.539326,107.022244 C122.810493,96.2781677 118.921348,83.5792213 118.921348,69.9732824 C118.921348,56.3673435 "
-    "122.810493,43.6683972 129.539326,32.9243209 C136.268159,43.6683972 140.157303,56.3673435 140.157303,69.9732824 "
-    "C140.157303,83.5792213 136.268159,96.2781677 129.539326,107.022244 Z",
-    "M248.460674,32.9243209 C255.189507,43.6683972 259.078652,56.3673435 259.078652,69.9732824 C259.078652,83.5792213 "
-    "255.189507,96.2781677 248.460674,107.022244 C241.731841,96.2781677 237.842697,83.5792213 237.842697,69.9732824 "
-    "C237.842697,56.3673435 241.731841,43.6683972 248.460674,32.9243209 Z",
-]
 # MDBList's mark is a potrace path in a y-up group scaled by 10; this undoes the group's transform.
 MDBLIST_GROUP = (0.1, 0, 0, -0.1, 0, 512)
 
@@ -75,8 +68,9 @@ CSS = """/*
  * SemiBold, Silo's own face, in which the source names "IMDb", "Letterboxd",
  * "RT", "Metacritic", "MAL" and "MDBList" are ligatures drawn as the logos.
  * "RT Audience" and "MC Users" draw as the RT and Metacritic logos followed
- * by "Audience" and "Users". Any other mark keeps its text in Silo's
- * letters, whichever ratings are turned on. If Silo changes its markup, the
+ * by "Audience" and "Users". A logo replaces only a whole name, so a mark
+ * such as "RT Top Critics" keeps its text. Any other mark keeps its text in
+ * the same letters, whichever ratings are turned on. If Silo changes its markup, the
  * rules stop matching and the text shows again; nothing breaks.
  *
  * The font carries Silo's tight tracking, because browsers drop ligatures
@@ -114,7 +108,7 @@ CSS = """/*
 }
 
 span.whitespace-nowrap:has(> span.tabular-nums) > span.font-semibold.opacity-75:first-child {
-  font-family: "Silo Rating Logos", "Plus Jakarta Sans", sans-serif;
+  font-family: "Silo Rating Logos", var(--font-body, "Plus Jakarta Sans", sans-serif);
   letter-spacing: normal;
   opacity: 1;
   color: rgb(from currentColor r g b / 1);
@@ -167,19 +161,35 @@ def band(pen):
 
 
 def svg_shapes(filename):
-    """The path data of each path, polygon and rect in an extras/logos file, in document order."""
+    """The path data of each drawn path, polygon and rect in an extras/logos file, in order.
+
+    Shapes inside defs, masks and clip paths are left out. Transforms are not applied: callers
+    work in the coordinates of the shapes' group.
+    """
     shapes = []
-    for element in ET.parse(LOGOS / filename).iter():
+
+    def visit(element):
         tag = element.tag.rsplit("}", 1)[-1]
+        if tag in ("defs", "mask", "clipPath"):
+            return
         if tag == "path":
             shapes.append(element.get("d"))
         elif tag == "polygon":
             shapes.append(f"M{element.get('points')}Z")
         elif tag == "rect":
-            x, y, w, h, r = (float(element.get(a, 0)) for a in ("x", "y", "width", "height", "rx"))
-            corner = f"a{r},{r} 0 0 1"
-            shapes.append(f"M{x + r},{y}h{w - 2 * r}{corner} {r},{r}v{h - 2 * r}{corner} {-r},{r}"
-                          f"h{2 * r - w}{corner} {-r},{-r}v{2 * r - h}{corner} {r},{-r}Z")
+            x, y, w, h = (float(element.get(a, 0)) for a in ("x", "y", "width", "height"))
+            # SVG: a missing radius takes the other's value, and each is at most half the side.
+            rx = min(float(element.get("rx") or element.get("ry") or 0), w / 2)
+            ry = min(float(element.get("ry") or element.get("rx") or 0), h / 2)
+            corner = f"a{rx},{ry} 0 0 1"
+            shapes.append(f"M{x + rx},{y}h{w - 2 * rx}{corner} {rx},{ry}"
+                          f"v{h - 2 * ry}{corner} {-rx},{ry}"
+                          f"h{2 * rx - w}{corner} {-rx},{-ry}"
+                          f"v{2 * ry - h}{corner} {rx},{-ry}Z")
+        for child in element:
+            visit(child)
+
+    visit(ET.parse(LOGOS / filename).getroot())
     return shapes
 
 
@@ -203,6 +213,7 @@ def logos():
     """
     imdb = svg_shapes("IMDb_PrimaryLogo_Gold.svg")[0]
     blue_x = 248.152672  # the Blue group's translate; its mask starts there
+    lb_overlaps = svg_shapes("letterboxd-decal-dots-pos-rgb.svg")
     rt = svg_shapes("rt-tomato-logo.svg")
     metacritic = svg_shapes("metacritic-logo.svg")
     mal = svg_shapes("myanimelist-favicon.svg")
@@ -216,8 +227,8 @@ def logos():
             ((0x00, 0xE0, 0x54), lambda p: dot(p, 189)),
             ((0x40, 0xBC, 0xF4), lambda p: dot(p, blue_x + 59.7686766, keep_right_of=blue_x)),
             ((0xFF, 0x80, 0x00), lambda p: dot(p, LB_RX, keep_left_of=129.847328)),
-            ((0xFF, 0xFF, 0xFF), lambda p: parse_path(LB_OVERLAPS[0], p)),
-            ((0xFF, 0xFF, 0xFF), lambda p: parse_path(LB_OVERLAPS[1], p)),
+            ((0xFF, 0xFF, 0xFF), lambda p: parse_path(lb_overlaps[0], p)),
+            ((0xFF, 0xFF, 0xFF), lambda p: parse_path(lb_overlaps[1], p)),
         ], [1, 2, 3]),
         # The red tomato has the letters cut out; the white layer fills them.
         "rt": ("RT", (0, 0, 32, 32), [
@@ -234,10 +245,10 @@ def logos():
         "mal": ("MAL", (0, 0, 192, 192), [
             ((0x2F, 0x52, 0xA2), lambda p: parse_path(mal[0], p)),
         ] + [((0xFF, 0xFF, 0xFF), lambda p, d=d: parse_path(d, p)) for d in mal[1:4]], [1, 2, 3]),
-        # One path: the square, then the two halves of the M cut out of it. Blue from the site's PNG logo.
+        # One path: the square, then the M's two halves cut out of it. Blue from the site's PNG logo.
         "mdblist": ("MDBList", (0.5, 0.4, 511, 511.1), [
             ((0x42, 0x84, 0xCA), lambda p: parse_path(mdblist, TransformPen(p, MDBLIST_GROUP))),
-            ((0xFF, 0xFF, 0xFF), lambda p: subpaths(mdblist, TransformPen(p, MDBLIST_GROUP), range(1, 3))),
+            ((0xFF, 0xFF, 0xFF), lambda p: subpaths(mdblist, TransformPen(p, MDBLIST_GROUP), (1, 2))),
         ], [0]),
     }
 
@@ -264,7 +275,7 @@ def add_gsub_features(font, fea):
     # Appended, so Jakarta's lookups (and their nested indices) keep their place.
     shift = len(gsub.LookupList.Lookup)
     gsub.LookupList.Lookup.extend(extra.LookupList.Lookup)
-    # The appended lookups' own nested indices, such as MC_USERS calling MC, move with them.
+    # The appended lookups' own nested indices, such as NAMES calling LOGOS, move with them.
     tables = [subtable for lookup in extra.LookupList.Lookup for subtable in lookup.SubTable]
     while tables:
         table = tables.pop()
@@ -292,6 +303,8 @@ def add_gsub_features(font, fea):
     for ls in langsys:
         ls.FeatureIndex = sorted(position[i] for i in ls.FeatureIndex)
         ls.FeatureCount = len(ls.FeatureIndex)
+        if ls.ReqFeatureIndex != 0xFFFF:  # 0xFFFF: no required feature
+            ls.ReqFeatureIndex = position[ls.ReqFeatureIndex]
     # fontTools' subsetter reads these counts rather than the lists' lengths.
     gsub.LookupList.LookupCount = len(gsub.LookupList.Lookup)
     gsub.FeatureList.FeatureCount = len(gsub.FeatureList.FeatureRecord)
@@ -312,7 +325,7 @@ def build_font():
         if advance:
             hmtx[name] = (max(0, advance + tracking), lsb)
 
-    palette, colr, ligatures, small = [], {}, [], []
+    palette, colr, names, small = [], {}, {}, []
     cmap = font.getBestCmap()
 
     def glyphs(text):
@@ -330,27 +343,39 @@ def build_font():
                 glyf[layer], _ = draw_glyph([draw], box, height_em, upem, centre_y)
                 colr[base].append((layer, palette.index(rgb)))
             # The base glyph holds the fallback layers, for renderers without COLR.
-            glyf[base], advance = draw_glyph([layers[i][1] for i in fallback], box, height_em, upem, centre_y)
+            fallback_draws = [layers[i][1] for i in fallback]
+            glyf[base], advance = draw_glyph(fallback_draws, box, height_em, upem, centre_y)
             for name in [base] + [layer for layer, _ in colr[base]]:
                 glyf[name].recalcBounds(glyf)
                 hmtx[name] = (advance, getattr(glyf[name], "xMin", 0))
-        ligatures.append(f"sub {glyphs(word)} by logo.{key};")
+        names[word] = (word, key)
         small.append(f"sub logo.{key} by logo.{key}.sm;")
+    names.update(LABELLED)
+
+    # A name becomes its logo only as the whole mark: nothing may come before or after it.
+    # Longer names go first, so "RT Audience" is tried before "RT".
+    ligatures = {f"sub {glyphs(part)} by logo.{key};" for part, key in names.values()}
+    rules = []
+    for name, (part, key) in sorted(names.items(), key=lambda item: (-len(item[0]), item[0])):
+        first, *others = glyphs(part).split()
+        rest = glyphs(name[len(part):])
+        marked_others = " ".join(f"{g}'" for g in others)
+        marked = f"{first}' {marked_others}"
+        rules += [f"ignore sub @ANY {marked} {rest};", f"ignore sub {marked} {rest} @ANY;",
+                  f"sub {first}' lookup LOGOS {marked_others} {rest};"]
 
     font["COLR"] = buildCOLR(colr, version=0)
     font["CPAL"] = buildCPAL([[(r / 255, g / 255, b / 255, 1.0) for r, g, b in palette]])
     # rlig survives where browsers drop liga; Jakarta's calt only touches x and - after digits.
-    # "RT Audience" needs no rule of its own: the RT ligature draws its start as RT's logo.
-    # "MC Users" draws as Metacritic's logo then "Users": M C becomes the logo only before " Users".
     add_gsub_features(font, f"""
 languagesystem DFLT dflt;
 languagesystem latn dflt;
-lookup LOGOS {{ {" ".join(ligatures)} }} LOGOS;
-lookup MC {{ sub {glyphs("MC")} by logo.metacritic; }} MC;
-lookup MC_USERS {{ sub {cmap[ord("M")]}' lookup MC {cmap[ord("C")]}' {glyphs(" Users")}; }} MC_USERS;
+@ANY = [{" ".join(sorted(set(cmap.values())))}];
+lookup LOGOS {{ {" ".join(sorted(ligatures))} }} LOGOS;
+lookup NAMES {{ {" ".join(rules)} }} NAMES;
 lookup SMALL {{ {" ".join(small)} }} SMALL;
-feature liga {{ lookup LOGOS; lookup MC_USERS; }} liga;
-feature rlig {{ lookup LOGOS; lookup MC_USERS; }} rlig;
+feature liga {{ lookup NAMES; }} liga;
+feature rlig {{ lookup NAMES; }} rlig;
 feature ss01 {{ lookup SMALL; }} ss01;
 """)
 

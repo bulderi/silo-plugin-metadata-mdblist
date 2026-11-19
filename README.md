@@ -145,7 +145,8 @@ the owners' own sites for personal use; the source files are in
 
 Silo names a rating's source only in its text, which CSS cannot read but a
 font can. The file's font is Silo's own typeface, Plus Jakarta Sans SemiBold,
-in which those source names draw as the logos. Each logo lands on its own
+in which those source names draw as the logos. Only a whole name does, so a
+mark such as "RT Top Critics" keeps its text, and each logo lands on its own
 rating whichever ratings you turn on. Every other mark keeps its text in the
 same letters, drawn fully opaque and without the home hero's text shadow,
 because browsers apply both to the logos too. If Silo changes its markup, the

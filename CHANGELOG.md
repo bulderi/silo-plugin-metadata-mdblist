@@ -14,7 +14,8 @@ official plugin are listed in its
   whichever ratings are turned on, and other sources keep their text.
 - The logo CSS also draws Rotten Tomatoes (critics and audience), Metacritic
   (critics and users), MyAnimeList and MDBList. Audience and user scores show
-  the brand's logo followed by "Audience" or "Users". Their compact icons draw
+  the brand's logo followed by "Audience" or "Users". A logo replaces only a
+  whole source name. Their compact icons draw
   taller than the wordmarks, so every logo looks about the same size. A
   browser without colour fonts draws each logo's outline instead of a solid
   shape.
