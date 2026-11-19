@@ -8,7 +8,9 @@ only this build's changes; each release is tagged `v<version>`. Changes to the
 official plugin are listed in its
 [releases](https://github.com/Silo-Server/silo-plugin-metadata-mdblist/releases).
 
-## Unreleased
+## 0.5.2-plus — 2026-11-19
+
+Based on the official 0.5.2.
 
 - The build is now MDBList Ratings Plus: plugin ID `bulderi.mdblist-plus` and
   versions ending in `-plus`, because it adds more than Letterboxd. Silo
