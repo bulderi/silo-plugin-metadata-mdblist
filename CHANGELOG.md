@@ -12,6 +12,11 @@ official plugin are listed in its
   position: Silo's own Plus Jakarta Sans, in which "IMDb" and "Letterboxd"
   are ligatures drawn as the logos. Each logo now lands on its own rating
   whichever ratings are turned on, and other sources keep their text.
+- The logo CSS also draws Rotten Tomatoes (critics and audience), Metacritic
+  (critics and users), MyAnimeList and MDBList. Their compact icons draw
+  taller than the wordmarks, so every logo looks about the same size. A
+  browser without colour fonts draws each logo's outline instead of a solid
+  shape.
 
 ## 0.5.2-letterboxd — 2026-11-19
 
