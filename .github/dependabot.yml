@@ -1,0 +1,14 @@
+# Go modules are left out: this build takes its dependencies from the official
+# plugin when it rebases, and updating them here would conflict with that.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: ci
