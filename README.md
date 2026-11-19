@@ -52,8 +52,6 @@ Checked against the official 0.5.2.
 - **Its own releases.** Silo installs and updates it from this repository's
   `index.json`. Releases are signed by this repository's workflow instead of
   Silo's shared release workflow.
-- **A newer SDK.** It builds against `silo-plugin-sdk` v0.35.0 and starts
-  through the SDK's manifest bootstrap; the official 0.5.2 uses v0.16.1.
 
 ## Install
 
