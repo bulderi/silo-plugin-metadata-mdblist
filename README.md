@@ -132,7 +132,7 @@ are taller, so every logo looks about the same size.
 | IMDb | IMDb's primary logo |
 | Letterboxd | Letterboxd's three dots |
 | RT | Rotten Tomatoes' tomato logo |
-| RT Audience | The Popcornmeter's full bucket, whatever the score |
+| RT Audience | The same logo, followed by "Audience" |
 | Metacritic | The icon of Metacritic's logo |
 | MC Users | The same icon, followed by "Users" |
 | MAL | MyAnimeList's icon |

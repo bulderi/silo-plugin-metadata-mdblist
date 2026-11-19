@@ -2,7 +2,7 @@
 
 The font is Plus Jakarta Sans SemiBold, the face Silo draws rating marks in,
 plus colour (COLRv0) logo glyphs that replace rating source names, such as
-"IMDb" and "RT Audience", through a ligature. Every other mark draws in Silo's
+"IMDb" and "MAL", through a ligature. Every other mark draws in Silo's
 own letters, so the CSS can give the font to every rating mark without knowing
 its source.
 
@@ -73,11 +73,11 @@ CSS = """/*
  * Silo writes each rating's source as plain text (TMDB alone gets its logo).
  * These rules give every rating mark the font below: Plus Jakarta Sans
  * SemiBold, Silo's own face, in which the source names "IMDb", "Letterboxd",
- * "RT", "RT Audience", "Metacritic", "MAL" and "MDBList" are ligatures drawn
- * as the logos, and "MC Users" draws as Metacritic's logo followed by
- * "Users". Any other mark keeps its text in Silo's letters, whichever ratings
- * are turned on. If Silo changes its markup, the rules stop matching and the
- * text shows again; nothing breaks.
+ * "RT", "Metacritic", "MAL" and "MDBList" are ligatures drawn as the logos.
+ * "RT Audience" and "MC Users" draw as the RT and Metacritic logos followed
+ * by "Audience" and "Users". Any other mark keeps its text in Silo's
+ * letters, whichever ratings are turned on. If Silo changes its markup, the
+ * rules stop matching and the text shows again; nothing breaks.
  *
  * The font carries Silo's tight tracking, because browsers drop ligatures
  * under letter-spacing. Every mark, logo or text, draws in its colour made
@@ -98,8 +98,9 @@ CSS = """/*
  * - IMDb's 2025 primary logo in IMDb Gold (brand.imdb.com).
  * - Letterboxd's dots decal (letterboxd.com/about/brand), cropped to the band
  *   around the dots.
- * - Rotten Tomatoes' tomato logo and its Popcornmeter's full bucket
- *   (rottentomatoes.com). The bucket shows whatever the audience score.
+ * - Rotten Tomatoes' tomato logo (rottentomatoes.com). It is the brand's
+ *   logo, not a Tomatometer or Popcornmeter icon, so it says nothing about
+ *   the score; CSS cannot read the score to pick a fresh or rotten icon.
  * - The icon of Metacritic's logo (metacritic.com).
  * - MyAnimeList's icon (myanimelist.net).
  * - MDBList's icon (mdblist.com), from its one-colour vector in the blue of
@@ -203,7 +204,6 @@ def logos():
     imdb = svg_shapes("IMDb_PrimaryLogo_Gold.svg")[0]
     blue_x = 248.152672  # the Blue group's translate; its mask starts there
     rt = svg_shapes("rt-tomato-logo.svg")
-    popcorn = svg_shapes("rt-popcornmeter-positive.svg")
     metacritic = svg_shapes("metacritic-logo.svg")
     mal = svg_shapes("myanimelist-favicon.svg")
     mdblist = svg_shapes("mdblist-safari-pinned-tab.svg")[0]
@@ -225,11 +225,6 @@ def logos():
             ((0xFA, 0x32, 0x0A), lambda p: parse_path(rt[1], p)),
             ((0xFA, 0x32, 0x0A), lambda p: parse_path(rt[2], p)),
         ], [1, 2]),
-        # Shape 0 is the icon's mask, a rectangle around the bucket.
-        "rtaudience": ("RT Audience", (0, 0.125, 59.602, 79.875), [
-            ((0xF9, 0xD3, 0x20), lambda p: parse_path(popcorn[1], p)),
-            ((0xDB, 0x38, 0x2A), lambda p: parse_path(popcorn[2], p)),
-        ] + [((0xFF, 0xFF, 0xFE), lambda p, d=d: parse_path(d, p)) for d in popcorn[3:7]], [0, 1]),
         # The icon of Metacritic's logo; shape 3 is the wordmark beside it.
         "metacritic": ("Metacritic", (0, 0, 40, 40), [
             ((0x00, 0x00, 0x00), lambda p: parse_path(metacritic[0], p)),
@@ -345,7 +340,7 @@ def build_font():
     font["COLR"] = buildCOLR(colr, version=0)
     font["CPAL"] = buildCPAL([[(r / 255, g / 255, b / 255, 1.0) for r, g, b in palette]])
     # rlig survives where browsers drop liga; Jakarta's calt only touches x and - after digits.
-    # feaLib orders each lookup's ligatures longest first, so "RT Audience" wins over "RT".
+    # "RT Audience" needs no rule of its own: the RT ligature draws its start as RT's logo.
     # "MC Users" draws as Metacritic's logo then "Users": M C becomes the logo only before " Users".
     add_gsub_features(font, f"""
 languagesystem DFLT dflt;
