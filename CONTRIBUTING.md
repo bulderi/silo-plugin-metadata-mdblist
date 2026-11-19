@@ -56,9 +56,10 @@ The fork is the official plugin plus its own commits: the plugin changes, the
 logo CSS, the install index and its release tooling, and the index commits the
 release workflow adds. Rebase them onto each new official release, rerun the
 validation above, set `manifest.json`'s version to the official version plus
-`-letterboxd`, and add the release to `CHANGELOG.md` before tagging it. Never
-edit `index.json` by hand: the release workflow writes it from the published
-binaries, and `TestCommittedIndex` checks it.
+`-letterboxd`, and add the release to `CHANGELOG.md` before tagging it: its
+section becomes the release notes, and the release workflow refuses a tag
+without one. Never edit `index.json` by hand: the release workflow writes it
+from the published binaries, and `TestCommittedIndex` checks it.
 
 ## Open the pull request
 
