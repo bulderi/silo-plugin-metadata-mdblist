@@ -17,6 +17,7 @@ Based on the official 0.5.2.
   its catalog secret, so this build signs with its own.
 - A release's notes are its section of this changelog, and a tag without one
   is not released.
+- Builds against `silo-plugin-sdk` v0.35.0, up from v0.24.0.
 
 ## 0.5.1-letterboxd — 2026-11-09
 
