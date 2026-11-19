@@ -44,8 +44,9 @@ Checked against the official 0.5.2.
   Ebert, and MyAnimeList as well, and declares eight rating sources to Silo,
   Letterboxd first. The official plugin declares three: the two Rotten Tomatoes
   scores and MDBList's.
-- **Rating logos.** `extras/silo-rating-logos.css` shows the IMDb and
-  Letterboxd logos in the web app (see [Rating logos](#rating-logos)).
+- **Rating logos.** `extras/silo-rating-logos.css` shows the logos of IMDb and
+  of the rating sources this build declares in the web app (see
+  [Rating logos](#rating-logos)).
 - **Its own plugin.** Its plugin ID is `bulderi.mdblist-letterboxd`, its
   version ends in `-letterboxd`, and its links point to this fork, so Silo
   lists it under **Other sources**, separately from the official plugin.
@@ -121,18 +122,35 @@ plugin.
 
 ## Rating logos
 
-`extras/silo-rating-logos.css` replaces the IMDb and Letterboxd text marks with
-their official logos, as tall as TMDB's, wherever Silo shows a rating: title
-pages, the home hero, the Watch Tonight card, and the Watch Together picker.
-The logos come from a font embedded in the file, so no request leaves the
-page; the source files are in `extras/logos` and are their owners' trademarks.
+`extras/silo-rating-logos.css` replaces rating text marks with logos wherever
+Silo shows a rating: title pages, the home hero, the Watch Tonight card, and
+the Watch Together picker. Wordmarks are as tall as TMDB's logo; compact icons
+are taller, so every logo looks about the same size.
+
+| Mark | Logo |
+| --- | --- |
+| IMDb | IMDb's primary logo |
+| Letterboxd | Letterboxd's three dots |
+| RT | Rotten Tomatoes' tomato logo |
+| RT Audience | The same logo, followed by "Audience" |
+| Metacritic | The icon of Metacritic's logo |
+| MC Users | The same icon, followed by "Users" |
+| MAL | MyAnimeList's icon |
+| MDBList | MDBList's icon |
+
+Roger Ebert keeps its text. The logos come from a font embedded in the file,
+so no request leaves the page. They are their owners' trademarks, taken from
+the owners' own sites for personal use; the source files are in
+`extras/logos`.
 
 Silo names a rating's source only in its text, which CSS cannot read but a
 font can. The file's font is Silo's own typeface, Plus Jakarta Sans SemiBold,
-in which the words "IMDb" and "Letterboxd" draw as the logos. Each logo lands
-on its own rating whichever ratings you turn on, and every other source keeps
-its text in the same letters as before. If Silo changes its markup, the text
-shows again.
+in which those source names draw as the logos. Only a whole name does, so a
+mark such as "RT Top Critics" keeps its text, and each logo lands on its own
+rating whichever ratings you turn on. Every other mark keeps its text in the
+same letters, drawn fully opaque and without the home hero's text shadow,
+because browsers apply both to the logos too. If Silo changes its markup, the
+text shows again.
 
 Load the file in one of these ways:
 
