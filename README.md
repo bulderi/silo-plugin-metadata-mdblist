@@ -2,8 +2,8 @@
 
 This is an unofficial fork of
 [Silo-Server/silo-plugin-metadata-mdblist](https://github.com/Silo-Server/silo-plugin-metadata-mdblist),
-based on its 0.5.0
-([Silo-Server/silo-plugin-metadata-mdblist#4](https://github.com/Silo-Server/silo-plugin-metadata-mdblist/pull/4)).
+based on its
+[0.5.2](https://github.com/Silo-Server/silo-plugin-metadata-mdblist/releases/tag/v0.5.2).
 It is not affiliated with Silo, MDBList or any rating service. The plugin
 fetches ratings with your own MDBList API key; the rating services' terms
 apply to how you use them.
@@ -17,7 +17,7 @@ and show status.
 
 - **Stores every rating MDBList has except Trakt's.** Besides IMDb, TMDB,
   Rotten Tomatoes critics and audience and MDBList's own score, which the
-  official 0.5.0 keeps, it keeps Letterboxd, Metacritic critics and users,
+  official 0.5.2 keeps, it keeps Letterboxd, Metacritic critics and users,
   Roger Ebert and MyAnimeList, which the official plugin drops. Trakt's rating
   stays out: Trakt has blocked MDBList's API access, so MDBList's figure is
   stale or missing, and Silo keeps at most eight declared rating sources per
@@ -199,7 +199,7 @@ be told apart from unrated; fixing it needs nullable rating fields host side.
 Silo downloads the binary for its platform and checks its SHA-256. It offers
 updates from the repository an installation is linked to, so new releases of
 this build appear as updates. Binaries are published for Linux amd64, Linux
-arm64, and macOS arm64.
+arm64, macOS arm64, FreeBSD amd64, and FreeBSD arm64.
 
 ### Moving from a build with the ID `silo.mdblist`
 
@@ -346,7 +346,7 @@ does not log a missing key: it simply stays idle until one is saved.
 
 ```sh
 make build        # host platform
-make build-all    # linux/amd64, linux/arm64, darwin/arm64
+make build-all    # linux/amd64, linux/arm64, darwin/arm64, freebsd/amd64, freebsd/arm64
 ```
 
 The build takes its version from `manifest.json` (for example
