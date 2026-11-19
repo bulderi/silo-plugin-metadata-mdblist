@@ -15,7 +15,7 @@ import (
 func main() {
 	repo := flag.String("repo", "", "GitHub repository in owner/name form")
 	tag := flag.String("tag", "", "release tag, v plus the manifest version")
-	dist := flag.String("dist", "dist", "directory with plugin-<os>-<arch> binaries and checksums.txt")
+	dist := flag.String("dist", "dist", "directory with plugin-<os>-<arch> binaries, checksums.txt and plugin.sigstore.json")
 	manifestPath := flag.String("manifest", "manifest.json", "path to manifest.json")
 	out := flag.String("out", "index.json", "where to write the index")
 	flag.Parse()
