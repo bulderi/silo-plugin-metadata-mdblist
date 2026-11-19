@@ -38,7 +38,7 @@ and show status.
   `bulderi.mdblist-letterboxd`, so Silo lists it separately from the official
   plugin. Its version ends in `-letterboxd`, and its publisher, source, support and
   changelog links point to this fork. Releases are cut only from a tag you
-  push, such as `v0.5.0-letterboxd`.
+  push, named `v` plus the version in `manifest.json`.
 - **Its own plugin repository.** Silo installs and updates it from this
   fork's `index.json` (see [Install](#install)).
 
@@ -349,8 +349,8 @@ make build        # host platform
 make build-all    # linux/amd64, linux/arm64, darwin/arm64
 ```
 
-The build takes its version from `manifest.json` (for example
-`0.5.0-letterboxd`), so Silo's plugin admin shows which build is installed.
+The build takes its version from `manifest.json`, so Silo's plugin admin
+shows which build is installed.
 The plugin starts through the SDK's manifest bootstrap
 (`runtime.ServeManifestWithOptions`), which validates the manifest, stamps the
 version and the binary's checksum, and answers `plugin manifest`.
