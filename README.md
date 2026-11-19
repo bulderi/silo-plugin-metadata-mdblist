@@ -101,7 +101,7 @@ plugin.
   TMDB, then the turned-on sources in declaration order. Silo's built-in NFO
   provider comes first and declares Rotten Tomatoes, Metacritic, Trakt, and
   TheTVDB ahead of Letterboxd, so turning on any of them can push Letterboxd
-  off the page. The logo CSS assumes Letterboxd is the only one, too.
+  off the page.
 - **It never identifies a title.** It looks titles up by the IMDb or TMDB ID
   another provider matched, and returns nothing without one. Its search always
   returns no results.
@@ -122,15 +122,17 @@ plugin.
 ## Rating logos
 
 `extras/silo-rating-logos.css` replaces the IMDb and Letterboxd text marks with
-their official logos, as tall as TMDB's, on title pages, the home hero, the
-Watch Tonight card, and the Watch Together picker. The logos are embedded in
-the file, so no request leaves the page; the source files are in
-`extras/logos` and are their owners' trademarks.
+their official logos, as tall as TMDB's, wherever Silo shows a rating: title
+pages, the home hero, the Watch Tonight card, and the Watch Together picker.
+The logos come from a font embedded in the file, so no request leaves the
+page; the source files are in `extras/logos` and are their owners' trademarks.
 
-Silo's markup does not name a rating's source, so the CSS goes by position:
-any other rating you turn on gets the Letterboxd logo. A lone text mark that
-could be either keeps its text, and if Silo changes its markup, the text shows
-again.
+Silo names a rating's source only in its text, which CSS cannot read but a
+font can. The file's font is Silo's own typeface, Plus Jakarta Sans SemiBold,
+in which the words "IMDb" and "Letterboxd" draw as the logos. Each logo lands
+on its own rating whichever ratings you turn on, and every other source keeps
+its text in the same letters as before. If Silo changes its markup, the text
+shows again.
 
 Load the file in one of these ways:
 
@@ -139,7 +141,7 @@ Load the file in one of these ways:
   proxy that rewrites responses, such as nginx with `sub_filter`, can instead
   add `<link rel="stylesheet" href="/silo-custom/rating-logos.css">` before
   `</head>`. Silo's Content-Security-Policy still applies: it allows the
-  same-origin stylesheet and blocks scripts.
+  same-origin stylesheet and its embedded font, and blocks scripts.
 - **A browser extension** for user styles, such as Stylus, with the file's
   contents and your Silo address as the site. It works only in browsers where
   you install it.
@@ -303,6 +305,13 @@ make build-all   # dist/ binaries for linux/amd64, linux/arm64, darwin/arm64, fr
 The build takes its version from `manifest.json`, so Silo's plugin admin shows
 which build is installed. [CONTRIBUTING.md](CONTRIBUTING.md) lists the checks
 to run before a pull request.
+
+`make logos` rebuilds `extras/silo-rating-logos.css` with
+`extras/font/build.py`, which needs Python with fontTools and brotli (Debian:
+`python3-fonttools python3-brotli`). It adds the logos to
+`extras/font/PlusJakartaSans-SemiBold-latin.woff2` (SIL Open Font License,
+`extras/font/OFL.txt`) and keeps only printable ASCII, the characters source
+names use. A new logo is a glyph and a ligature for its source's name there.
 
 ### Release
 

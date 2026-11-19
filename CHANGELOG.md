@@ -6,6 +6,13 @@ plus `-letterboxd`; each release is tagged `v<version>`. Changes to the
 official plugin are listed in its
 [releases](https://github.com/Silo-Server/silo-plugin-metadata-mdblist/releases).
 
+## Unreleased
+
+- `extras/silo-rating-logos.css` draws the logos with a font instead of by
+  position: Silo's own Plus Jakarta Sans, in which "IMDb" and "Letterboxd"
+  are ligatures drawn as the logos. Each logo now lands on its own rating
+  whichever ratings are turned on, and other sources keep their text.
+
 ## 0.5.2-letterboxd — 2026-11-19
 
 Based on the official 0.5.2.

@@ -22,8 +22,8 @@ Open an [issue](https://github.com/bulderi/silo-plugin-metadata-mdblist/issues)
 before changing which rating sources the plugin reports or declares, their
 order, or the advertised capability. Silo keeps at most eight declared rating
 sources per capability and shows them in declaration order, and
-`extras/silo-rating-logos.css` assumes Letterboxd is the only source turned on
-beyond IMDb and TMDB.
+`extras/silo-rating-logos.css` draws a logo only for a source whose name matches
+a ligature in `extras/font/build.py`.
 
 ## Development setup
 
@@ -45,9 +45,11 @@ golangci-lint run ./...
 ```
 
 The manifest command must exit successfully, and `gofmt -l .` and
-`golangci-lint` must report nothing. A new rating source needs a mapping in
-`provider/provider.go`, a declaration in `manifest.json` (the manifest test
-fails when the two disagree), and a pinned value scale if MDBList sends it
+`golangci-lint` must report nothing. After changing `extras/font` or
+`extras/logos`, run `make logos` and commit the regenerated CSS. A new rating
+source needs a mapping in `provider/provider.go`, a declaration in
+`manifest.json` (the manifest test fails when the two disagree), and a pinned
+value scale if MDBList sends it
 without a score.
 
 ## Keep up with the official plugin
