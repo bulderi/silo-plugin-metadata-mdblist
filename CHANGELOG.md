@@ -6,7 +6,7 @@ plus `-letterboxd`; each release is tagged `v<version>`. Changes to the
 official plugin are listed in its
 [releases](https://github.com/Silo-Server/silo-plugin-metadata-mdblist/releases).
 
-## 0.5.2-letterboxd — unreleased
+## 0.5.2-letterboxd — 2026-11-19
 
 Based on the official 0.5.2.
 
