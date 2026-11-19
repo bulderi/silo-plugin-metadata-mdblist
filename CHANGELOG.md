@@ -15,6 +15,8 @@ Based on the official 0.5.2.
   `index.json` lists the bundle, so Silo shows the installation as verified.
   The official plugin's signed release workflow signs as Silo-Server and needs
   its catalog secret, so this build signs with its own.
+- A release's notes are its section of this changelog, and a tag without one
+  is not released.
 
 ## 0.5.1-letterboxd — 2026-11-09
 
