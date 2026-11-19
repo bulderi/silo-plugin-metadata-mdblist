@@ -196,7 +196,8 @@ be told apart from unrated; fixing it needs nullable rating fields host side.
 3. On the **Catalog** tab, find **MDBList Ratings** by bulderi under **Other
    sources** and click **Install**.
 
-Silo downloads the binary for its platform and checks its SHA-256. It offers
+Silo downloads the binary for its platform and checks its SHA-256 and its
+signature (see [Signed releases](#signed-releases)). It offers
 updates from the repository an installation is linked to, so new releases of
 this build appear as updates. Binaries are published for Linux amd64, Linux
 arm64, macOS arm64, FreeBSD amd64, and FreeBSD arm64.
@@ -358,15 +359,29 @@ version and the binary's checksum, and answers `plugin manifest`.
 To release, bump `version` in `manifest.json`, add the changes to
 [CHANGELOG.md](CHANGELOG.md), and push a matching tag (`v0.5.1-letterboxd`);
 there is no automatic version bump. The release workflow runs the CI checks,
-builds every platform, and publishes the binaries with `checksums.txt` and
-`index.json`, written by `cmd/genindex`. It then commits that `index.json` to
-`main`, which is the file the install URL serves.
+builds every platform, signs the binaries with a GitHub build provenance
+attestation, and publishes them with `checksums.txt`, the signature bundle
+`plugin.sigstore.json`, and `index.json`, written by `cmd/genindex`. It then
+commits that `index.json` to `main`, which is the file the install URL serves.
 [CONTRIBUTING.md](CONTRIBUTING.md) lists the checks to run first.
 
 Silo compares versions segment by segment and compares a segment with the
 suffix as text, so it would rank `0.5.10-letterboxd` below `0.5.9-letterboxd`
 and offer no update. Move to the next minor version instead of a two-digit
 patch.
+
+### Signed releases
+
+Each release from 0.5.2-letterboxd on is signed. Silo servers that check
+plugin signatures verify that this repository's release workflow built the
+binary from the version's tag, and show the installation as verified. To check
+a download yourself:
+
+```sh
+gh attestation verify plugin-linux-amd64 \
+  --repo bulderi/silo-plugin-metadata-mdblist \
+  --source-ref refs/tags/v<version>
+```
 
 ## Keeping up with the official plugin
 

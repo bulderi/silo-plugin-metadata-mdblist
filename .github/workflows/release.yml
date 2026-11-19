@@ -24,6 +24,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # Sign the binaries with a build provenance attestation.
+      id-token: write
+      attestations: write
     env:
       GOWORK: off
     steps:
@@ -45,9 +48,26 @@ jobs:
       - name: Build every platform
         run: make build-all
 
-      - name: Write checksums and the install index
+      - name: Write checksums
+        run: (cd dist && sha256sum plugin-* > checksums.txt)
+
+      # Silo checks a third-party release's bundle against the catalog's
+      # repo_url and the tag refs/tags/v<version>.
+      - name: Attest build provenance
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-checksums: dist/checksums.txt
+
+      - name: Add the signature bundle
+        env:
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
         run: |
-          (cd dist && sha256sum plugin-* > checksums.txt)
+          jq -e '.mediaType' "$BUNDLE_PATH" >/dev/null
+          cp "$BUNDLE_PATH" dist/plugin.sigstore.json
+
+      - name: Write the install index
+        run: |
           go run ./cmd/genindex -repo "$GITHUB_REPOSITORY" -tag "$GITHUB_REF_NAME" \
             -dist dist -out dist/index.json
 
@@ -55,7 +75,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/plugin-* dist/checksums.txt dist/index.json \
+          gh release create "$GITHUB_REF_NAME" dist/plugin-* dist/checksums.txt \
+            dist/plugin.sigstore.json dist/index.json \
             --verify-tag --title "MDBList Ratings ${GITHUB_REF_NAME#v}" --generate-notes
 
   install-index:

@@ -1,7 +1,7 @@
 // Package catalogindex builds the plugin repository index (index.json) that a
 // Silo server reads when an administrator adds this repository under
 // Plugins > Catalog. Silo then downloads the binary for its platform, checks
-// its SHA-256, and offers new versions as updates.
+// its SHA-256 and its Sigstore signature, and offers new versions as updates.
 package catalogindex
 
 import (
@@ -38,6 +38,8 @@ type Package struct {
 	RepoURL      string                   `json:"repo_url,omitempty"`
 	ChecksumsURL string                   `json:"checksums_url,omitempty"`
 	Binaries     map[string]Binary        `json:"binaries,omitempty"`
+	// BundleURL is the release's Sigstore bundle, which attests every binary.
+	BundleURL string `json:"bundle_url,omitempty"`
 }
 
 // Binary is one platform's release asset.
@@ -45,6 +47,9 @@ type Binary struct {
 	URL      string `json:"url"`
 	Checksum string `json:"checksum"`
 }
+
+// bundleName is the release asset holding the build provenance attestation.
+const bundleName = "plugin.sigstore.json"
 
 var (
 	sha256Pattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
@@ -59,13 +64,15 @@ type Options struct {
 	Repository string
 	// Tag is the release tag, which must be "v" plus the manifest version.
 	Tag string
-	// DistDir holds plugin-<os>-<arch> binaries and checksums.txt.
+	// DistDir holds plugin-<os>-<arch> binaries, checksums.txt and
+	// plugin.sigstore.json.
 	DistDir string
 }
 
 // Build creates the index for one release. It refuses a release whose tag
-// does not match the manifest, or whose binaries do not match checksums.txt,
-// so an index can never point Silo at a binary it would reject.
+// does not match the manifest, whose binaries do not match checksums.txt, or
+// that has no signature bundle, so an index can never point Silo at a binary
+// it would reject or mark invalid.
 func Build(opts Options) (*Index, error) {
 	if !repoPattern.MatchString(opts.Repository) || strings.Contains(opts.Repository, "..") {
 		return nil, fmt.Errorf("repository %q must be in owner/name form", opts.Repository)
@@ -111,6 +118,9 @@ func Build(opts Options) (*Index, error) {
 	if len(binaries) == 0 {
 		return nil, fmt.Errorf("manifest declares no supported platforms")
 	}
+	if _, err := os.Stat(filepath.Join(opts.DistDir, bundleName)); err != nil {
+		return nil, fmt.Errorf("signature bundle: %w", err)
+	}
 
 	// The checksum belongs to each platform binary; the manifest's own field
 	// is a build-time placeholder.
@@ -120,6 +130,7 @@ func Build(opts Options) (*Index, error) {
 		RepoURL:      "https://github.com/" + opts.Repository,
 		ChecksumsURL: base + "checksums.txt",
 		Binaries:     binaries,
+		BundleURL:    base + bundleName,
 	}}}, nil
 }
 

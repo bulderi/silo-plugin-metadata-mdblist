@@ -24,8 +24,8 @@ func readManifest(t *testing.T) []byte {
 	return data
 }
 
-// writeDist creates fake release binaries for every platform in the manifest
-// and a matching checksums.txt.
+// writeDist creates fake release binaries for every platform in the manifest,
+// a matching checksums.txt, and a signature bundle.
 func writeDist(t *testing.T, manifestJSON []byte) (dir string, tag string) {
 	t.Helper()
 	manifest, err := publicmanifest.Load(manifestJSON)
@@ -46,6 +46,9 @@ func writeDist(t *testing.T, manifestJSON []byte) (dir string, tag string) {
 	if err := os.WriteFile(filepath.Join(dir, "checksums.txt"), []byte(strings.Join(lines, "\n")+"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.WriteFile(filepath.Join(dir, "plugin.sigstore.json"), []byte(`{"mediaType":"application/vnd.dev.sigstore.bundle.v0.3+json"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
 	return dir, "v" + manifest.GetVersion()
 }
 
@@ -62,6 +65,7 @@ type siloRepositoryIndex struct {
 			URL      string `json:"url"`
 			Checksum string `json:"checksum"`
 		} `json:"binaries,omitempty"`
+		BundleURL string `json:"bundle_url,omitempty"`
 	} `json:"plugins"`
 }
 
@@ -105,6 +109,9 @@ func TestIndexDecodesTheWaySiloReadsIt(t *testing.T) {
 	base := "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/" + tag + "/"
 	if entry.ChecksumsURL != base+"checksums.txt" {
 		t.Errorf("checksums_url = %q", entry.ChecksumsURL)
+	}
+	if entry.BundleURL != base+"plugin.sigstore.json" {
+		t.Errorf("bundle_url = %q", entry.BundleURL)
 	}
 	if len(entry.Binaries) != len(want.GetSupportedPlatforms()) {
 		t.Fatalf("binaries = %v", entry.Binaries)
@@ -153,6 +160,12 @@ func TestBuildRefusesMismatches(t *testing.T) {
 				}
 			}
 			if err := os.WriteFile(filepath.Join(dist, "checksums.txt"), []byte(strings.Join(kept, "\n")), 0o644); err != nil {
+				panic(err)
+			}
+		},
+		// Silo marks a release whose bundle_url does not resolve as invalid.
+		"signature bundle missing": func(dist string, _ *Options) {
+			if err := os.Remove(filepath.Join(dist, "plugin.sigstore.json")); err != nil {
 				panic(err)
 			}
 		},

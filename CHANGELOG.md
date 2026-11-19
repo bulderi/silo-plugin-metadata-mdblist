@@ -11,8 +11,10 @@ official plugin are listed in its
 Based on the official 0.5.2.
 
 - Binaries for FreeBSD amd64 and arm64, from the official plugin.
-- The official plugin's signed release workflow is not adopted: it signs as
-  Silo-Server and needs its catalog secret, so this build keeps its own.
+- Releases are signed with a GitHub build provenance attestation, and
+  `index.json` lists the bundle, so Silo shows the installation as verified.
+  The official plugin's signed release workflow signs as Silo-Server and needs
+  its catalog secret, so this build signs with its own.
 
 ## 0.5.1-letterboxd — 2026-11-09
 
