@@ -52,7 +52,7 @@ Checked against the official 0.5.2.
 - **Its own releases.** Silo installs and updates it from this repository's
   `index.json`. Releases are signed by this repository's workflow instead of
   Silo's shared release workflow.
-- **A newer SDK.** It builds against `silo-plugin-sdk` v0.24.0 and starts
+- **A newer SDK.** It builds against `silo-plugin-sdk` v0.35.0 and starts
   through the SDK's manifest bootstrap; the official 0.5.2 uses v0.16.1.
 
 ## Install
@@ -194,7 +194,7 @@ Silo build renames the file, the rule stops matching and the text marks return.
 - **Plugin ID:** `bulderi.mdblist-letterboxd`
 - **Capability:** `metadata_provider.v1`, id `mdblist`, with
   `lookup_provider_ids: ["imdb", "tmdb"]` and `bulk_lookup_limit: 100`
-- Builds against `silo-plugin-sdk` v0.24.0 and starts through
+- Builds against `silo-plugin-sdk` v0.35.0 and starts through
   `runtime.ServeManifestWithOptions`, which validates the manifest, stamps the
   version and the binary's checksum, and answers `plugin manifest`.
 - Showing declared rating sources needs
