@@ -1,7 +1,7 @@
 // Command genindex writes index.json, the plugin repository index Silo reads
 // from Plugins > Catalog > Add repository, for one release:
 //
-//	go run ./cmd/genindex -repo owner/name -tag v0.5.1-letterboxd -dist dist -out dist/index.json
+//	go run ./cmd/genindex -repo owner/name -tag v0.5.2-plus -dist dist -out dist/index.json
 package main
 
 import (

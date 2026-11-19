@@ -1,4 +1,4 @@
-# MDBList ratings plugin for Silo (Letterboxd build)
+# MDBList Ratings Plus for Silo
 
 > [!WARNING]
 > This is an unofficial fork of the official
@@ -7,8 +7,9 @@
 > ratings with your own MDBList API key, and the rating services' terms apply
 > to how you use them.
 
-Adds Letterboxd ratings to Silo's title pages, and stores every other rating
-MDBList has, from the IMDb or TMDB ID your primary metadata provider already
+Adds Letterboxd, Metacritic, Roger Ebert and MyAnimeList ratings to Silo's
+title pages, with logos for the web app, and stores every other rating MDBList
+has, from the IMDb or TMDB ID your primary metadata provider already
 matched. It runs below TMDB in a library's metadata provider chain and fills
 only what TMDB left empty.
 
@@ -47,8 +48,8 @@ Checked against the official 0.5.2.
 - **Rating logos.** `extras/silo-rating-logos.css` shows the logos of IMDb and
   of the rating sources this build declares in the web app (see
   [Rating logos](#rating-logos)).
-- **Its own plugin.** Its plugin ID is `bulderi.mdblist-letterboxd`, its
-  version ends in `-letterboxd`, and its links point to this fork, so Silo
+- **Its own plugin.** Its plugin ID is `bulderi.mdblist-plus`, its version
+  ends in `-plus`, and its links point to this fork, so Silo
   lists it under **Other sources**, separately from the official plugin.
 - **Its own releases.** Silo installs and updates it from this repository's
   `index.json`. Releases are signed by this repository's workflow instead of
@@ -65,18 +66,19 @@ Checked against the official 0.5.2.
 
 2. If the official **MDBList Ratings** plugin is installed, remove it. Both
    declare the same rating sources, so run only one.
-3. Find **MDBList Ratings** by bulderi under **Other sources** and click
+3. Find **MDBList Ratings Plus** by bulderi under **Other sources** and click
    **Install**.
 
 New releases show up as updates in Silo. Binaries are published for Linux
 amd64, Linux arm64, macOS arm64, FreeBSD amd64, and FreeBSD arm64.
 
-### Moving from a build with the ID `silo.mdblist`
+### Moving from an earlier build
 
-Before 0.5.1-letterboxd this build used the official plugin's ID, so Silo
-treats the current one as a new plugin:
+Before 0.5.2-plus this build was the Letterboxd build, with the ID
+`bulderi.mdblist-letterboxd`, and before 0.5.1-letterboxd it used the official
+plugin's ID, `silo.mdblist`. Silo treats the current one as a new plugin:
 
-1. Remove the installed `silo.mdblist` plugin.
+1. Remove the installed `bulderi.mdblist-letterboxd` or `silo.mdblist` plugin.
 2. Install this one from the catalog, as above.
 3. Paste your MDBList API key into its settings again.
 4. Check its place in each library's provider chain, as under [Setup](#setup).
@@ -209,7 +211,7 @@ Silo build renames the file, the rule stops matching and the text marks return.
 
 ## For developers
 
-- **Plugin ID:** `bulderi.mdblist-letterboxd`
+- **Plugin ID:** `bulderi.mdblist-plus`
 - **Capability:** `metadata_provider.v1`, id `mdblist`, with
   `lookup_provider_ids: ["imdb", "tmdb"]` and `bulk_lookup_limit: 100`
 - Builds against `silo-plugin-sdk` v0.35.0 and starts through
@@ -342,10 +344,9 @@ publishes them with `checksums.txt`, the signature bundle
 `plugin.sigstore.json`, and `index.json`, written by `cmd/genindex`. It then
 commits that `index.json` to `main`, which is the file the install URL serves.
 
-Silo compares versions segment by segment and compares a segment with the
-suffix as text, so it would rank `0.5.10-letterboxd` below `0.5.9-letterboxd`
-and offer no update. Move to the next minor version instead of a two-digit
-patch.
+Silo compares versions as semver, so a release with only this fork's changes
+appends `.1`, `.2` and so on, such as `0.5.2-plus.1`, which ranks above
+`0.5.2-plus`.
 
 Each release from 0.5.2-letterboxd on is signed. Silo verifies that this
 repository's release workflow built the binary from the version's tag and shows
@@ -363,7 +364,7 @@ This fork is the official plugin plus its own commits: the plugin changes, the
 logo CSS, the install index and its release tooling, and the index commits the
 release workflow adds. With the official repository as the `upstream` remote,
 move them onto a new official version with a rebase, run the tests, set the
-version to the official one plus `-letterboxd`, and push:
+version to the official one plus `-plus`, and push:
 
 ```sh
 git fetch upstream

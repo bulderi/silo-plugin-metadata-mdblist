@@ -1,11 +1,19 @@
 # Changelog
 
-Notable changes to the unofficial Letterboxd build of the MDBList plugin.
-Versions follow `version` in `manifest.json`, which is the official version
-plus `-letterboxd`, then `.1`, `.2` and so on for releases with only this
-build's changes; each release is tagged `v<version>`. Changes to the
+Notable changes to MDBList Ratings Plus, an unofficial build of the MDBList
+plugin, called the Letterboxd build before 0.5.2-plus. Versions follow
+`version` in `manifest.json`, which is the official version plus `-plus`
+(`-letterboxd` before 0.5.2-plus), then `.1`, `.2` and so on for releases with
+only this build's changes; each release is tagged `v<version>`. Changes to the
 official plugin are listed in its
 [releases](https://github.com/Silo-Server/silo-plugin-metadata-mdblist/releases).
+
+## Unreleased
+
+- The build is now MDBList Ratings Plus: plugin ID `bulderi.mdblist-plus` and
+  versions ending in `-plus`, because it adds more than Letterboxd. Silo
+  treats it as a new plugin: follow "Moving from an earlier build" in the
+  README.
 
 ## 0.5.2-letterboxd.1 — 2026-11-19
 

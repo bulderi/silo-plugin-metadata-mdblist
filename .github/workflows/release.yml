@@ -1,7 +1,7 @@
 name: Release
 
-# Releases only from a tag pushed by hand, such as v0.5.1-letterboxd. This
-# fork's versions carry the -letterboxd suffix, and the tag must match
+# Releases only from a tag pushed by hand, such as v0.5.2-plus. This
+# fork's versions carry the -plus suffix, and the tag must match
 # the version in manifest.json exactly; there is no automatic version bump.
 on:
   push:
