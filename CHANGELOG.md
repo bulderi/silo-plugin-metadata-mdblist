@@ -6,6 +6,14 @@ plus `-letterboxd`; each release is tagged `v<version>`. Changes to the
 official plugin are listed in its
 [releases](https://github.com/Silo-Server/silo-plugin-metadata-mdblist/releases).
 
+## 0.5.2-letterboxd — unreleased
+
+Based on the official 0.5.2.
+
+- Binaries for FreeBSD amd64 and arm64, from the official plugin.
+- The official plugin's signed release workflow is not adopted: it signs as
+  Silo-Server and needs its catalog secret, so this build keeps its own.
+
 ## 0.5.1-letterboxd — 2026-11-09
 
 - The plugin ID is now `bulderi.mdblist-letterboxd`, so Silo lists this build
