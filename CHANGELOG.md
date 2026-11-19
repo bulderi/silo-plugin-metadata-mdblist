@@ -2,11 +2,15 @@
 
 Notable changes to the unofficial Letterboxd build of the MDBList plugin.
 Versions follow `version` in `manifest.json`, which is the official version
-plus `-letterboxd`; each release is tagged `v<version>`. Changes to the
+plus `-letterboxd`, then `.1`, `.2` and so on for releases with only this
+build's changes; each release is tagged `v<version>`. Changes to the
 official plugin are listed in its
 [releases](https://github.com/Silo-Server/silo-plugin-metadata-mdblist/releases).
 
-## Unreleased
+## 0.5.2-letterboxd.1 — 2026-11-19
+
+Based on the official 0.5.2. The plugin itself is unchanged; this release
+updates the logo CSS in `extras/`.
 
 - `extras/silo-rating-logos.css` draws the logos with a font instead of by
   position: Silo's own Plus Jakarta Sans, in which "IMDb" and "Letterboxd"
@@ -15,10 +19,9 @@ official plugin are listed in its
 - The logo CSS also draws Rotten Tomatoes (critics and audience), Metacritic
   (critics and users), MyAnimeList and MDBList. Audience and user scores show
   the brand's logo followed by "Audience" or "Users". A logo replaces only a
-  whole source name. Their compact icons draw
-  taller than the wordmarks, so every logo looks about the same size. A
-  browser without colour fonts draws each logo's outline instead of a solid
-  shape.
+  whole source name. Compact icons draw taller than the wordmarks, so every
+  logo looks about the same size. A browser without colour fonts draws each
+  logo's outline instead of a solid shape.
 
 ## 0.5.2-letterboxd — 2026-11-19
 

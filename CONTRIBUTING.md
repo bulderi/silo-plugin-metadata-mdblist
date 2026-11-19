@@ -60,7 +60,9 @@ release workflow adds. Rebase them onto each new official release, rerun the
 validation above, set `manifest.json`'s version to the official version plus
 `-letterboxd`, and add the release to `CHANGELOG.md` before tagging it: its
 section becomes the release notes, and the release workflow refuses a tag
-without one. Never edit `index.json` by hand: the release workflow writes it
+without one. A release with only this fork's changes appends `.1`, `.2` and
+so on, such as `0.5.2-letterboxd.1`, which Silo offers as newer than
+`0.5.2-letterboxd`. Never edit `index.json` by hand: the release workflow writes it
 from the published binaries, and `TestCommittedIndex` checks it.
 
 ## Open the pull request

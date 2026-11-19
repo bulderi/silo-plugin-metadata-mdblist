@@ -1,6 +1,6 @@
 {
   "plugin_id": "bulderi.mdblist-letterboxd",
-  "version": "0.5.2-letterboxd",
+  "version": "0.5.2-letterboxd.1",
   "checksum": "__CHECKSUM__",
   "silo_api_version": "v1",
   "presentation": {
