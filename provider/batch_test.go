@@ -493,6 +493,32 @@ func TestBatchSizeRefusalLowersTheLimit(t *testing.T) {
 	}
 }
 
+// TestLoweredBatchLimitLapses: a lowered limit, possibly from a transient
+// refusal, must not keep batching small until the plugin restarts.
+func TestLoweredBatchLimitLapses(t *testing.T) {
+	t.Parallel()
+
+	clock := &fakeClock{now: time.Date(2026, 11, 20, 12, 0, 0, 0, time.UTC)}
+	client := NewClient()
+	client.now = clock.Now
+	key := batchKey{idProvider: "imdb", mediaType: "movie"}
+	limit := func() int {
+		client.batchMu.Lock()
+		defer client.batchMu.Unlock()
+		return client.batchLimitLocked(key)
+	}
+
+	client.lowerBatchLimit(key, 1)
+	clock.Advance(batchLimitTTL - time.Second)
+	if got := limit(); got != 1 {
+		t.Fatalf("batch limit just before the lapse = %d, want 1", got)
+	}
+	clock.Advance(time.Second)
+	if got := limit(); got != maxBatchSize {
+		t.Fatalf("batch limit after a day = %d, want %d", got, maxBatchSize)
+	}
+}
+
 // TestOneBadIDDoesNotTurnBatchingOff: MDBList refuses any batch containing
 // one malformed ID. Every good ID must still be answered, and the route must
 // keep batching, because the refusals were never about size.

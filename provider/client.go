@@ -69,7 +69,7 @@ type Client struct {
 	batchMu     sync.Mutex
 	batchWindow time.Duration
 	queues      map[batchKey]*batchQueue
-	batchLimits map[batchKey]int
+	batchLimits map[batchKey]learnedLimit
 }
 
 // NewClient builds a client with no API key; Configure supplies one later.
@@ -85,7 +85,7 @@ func NewClient() *Client {
 		userAgent:   defaultUserAgent,
 		batchWindow: defaultBatchWindow,
 		queues:      make(map[batchKey]*batchQueue),
-		batchLimits: make(map[batchKey]int),
+		batchLimits: make(map[batchKey]learnedLimit),
 	}
 }
 

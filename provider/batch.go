@@ -26,14 +26,25 @@ import (
 // Its ratings batch allows 10 IDs per request for regular accounts and 100 for
 // supporters, so the client starts at maxBatchSize. When MDBList refuses a
 // batch, the client retries it in halves; if both halves go through, the
-// refusal was about size and the route keeps the smaller limit.
+// refusal was about size and the route keeps the smaller limit for
+// batchLimitTTL.
 
 const (
 	// defaultBatchWindow is how long the first lookup waits for company.
 	defaultBatchWindow = 250 * time.Millisecond
 	// maxBatchSize is the most IDs sent in one batch request.
 	maxBatchSize = 100
+	// batchLimitTTL is how long a lowered limit holds. A transient refusal
+	// can lower it to one, which would otherwise turn batching off, and
+	// multiply the requests a library costs, until the plugin restarts.
+	batchLimitTTL = 24 * time.Hour
 )
+
+// learnedLimit is a lowered batch limit and when it lapses.
+type learnedLimit struct {
+	size  int
+	until time.Time
+}
 
 // batchKey is one MDBList route: IDs are only batchable with IDs of the same
 // provider and media type.
@@ -317,8 +328,8 @@ func answeredID(key batchKey, response *mediaResponse) string {
 }
 
 func (c *Client) batchLimitLocked(key batchKey) int {
-	if limit, ok := c.batchLimits[key]; ok {
-		return limit
+	if limit, ok := c.batchLimits[key]; ok && c.now().Before(limit.until) {
+		return limit.size
 	}
 	return maxBatchSize
 }
@@ -330,7 +341,7 @@ func (c *Client) lowerBatchLimit(key batchKey, limit int) {
 	c.batchMu.Lock()
 	defer c.batchMu.Unlock()
 	if limit < c.batchLimitLocked(key) {
-		c.batchLimits[key] = limit
+		c.batchLimits[key] = learnedLimit{size: limit, until: c.now().Add(batchLimitTTL)}
 		log.Printf("mdblist: batch limit for %s/%s lowered to %d", key.idProvider, key.mediaType, limit)
 	}
 }
