@@ -48,8 +48,8 @@ Checked against the official 0.5.2.
 - **Rating logos.** `extras/silo-rating-logos.css` shows the logos of IMDb and
   of the rating sources this build declares in the web app (see
   [Rating logos](#rating-logos)).
-- **Its own plugin.** Its plugin ID is `bulderi.mdblist-plus`, its version
-  ends in `-plus`, and its links point to this fork, so Silo
+- **Its own plugin.** Its plugin ID is `bulderi.mdblist-plus`, it has its
+  own version numbers, and its links point to this fork, so Silo
   lists it under **Other sources**, separately from the official plugin.
 - **Its own releases.** Silo installs and updates it from this repository's
   `index.json`. Releases are signed by this repository's workflow instead of
@@ -344,9 +344,10 @@ publishes them with `checksums.txt`, the signature bundle
 `plugin.sigstore.json`, and `index.json`, written by `cmd/genindex`. It then
 commits that `index.json` to `main`, which is the file the install URL serves.
 
-Silo compares versions as semver, so a release with only this fork's changes
-appends `.1`, `.2` and so on, such as `0.5.2-plus.1`, which ranks above
-`0.5.2-plus`.
+From 1.0.0 this build has its own semantic version, which Silo compares to
+offer updates: a fix raises the patch number, a feature the minor number, and a
+change an administrator has to act on the major number. Each release's
+CHANGELOG section names the official version it is based on.
 
 Each release from 0.5.2-letterboxd on is signed. Silo verifies that this
 repository's release workflow built the binary from the version's tag and shows
@@ -363,8 +364,8 @@ gh attestation verify plugin-linux-amd64 \
 This fork is the official plugin plus its own commits: the plugin changes, the
 logo CSS, the install index and its release tooling, and the index commits the
 release workflow adds. With the official repository as the `upstream` remote,
-move them onto a new official version with a rebase, run the tests, set the
-version to the official one plus `-plus`, and push:
+move them onto a new official version with a rebase, run the tests, and
+push:
 
 ```sh
 git fetch upstream

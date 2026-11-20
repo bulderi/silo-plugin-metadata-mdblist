@@ -2,16 +2,19 @@
 
 Notable changes to MDBList Ratings Plus, an unofficial build of the MDBList
 plugin, called the Letterboxd build before 0.5.2-plus. Versions follow
-`version` in `manifest.json`, which is the official version plus `-plus`
-(`-letterboxd` before 0.5.2-plus), then `.1`, `.2` and so on for releases with
-only this build's changes; each release is tagged `v<version>`. Changes to the
-official plugin are listed in its
-[releases](https://github.com/Silo-Server/silo-plugin-metadata-mdblist/releases).
+`version` in `manifest.json`, and each release is tagged `v<version>`. From
+1.0.0 the build has its own semantic version, and each release names the
+official version it is based on. Before that, a version was the official
+version plus `-plus` (`-letterboxd` before 0.5.2-plus), then `.1`, `.2` and so
+on for releases with only this build's changes. Changes to the official
+plugin are listed in its [releases](https://github.com/Silo-Server/silo-plugin-metadata-mdblist/releases).
 
-## 0.5.2-plus.1 — 2026-11-20
+## 1.0.0 — 2026-11-20
 
 Based on the official 0.5.2.
 
+- The build has its own semantic version from now on, starting at 1.0.0.
+  Silo offers it as an update to 0.5.2-plus.
 - A title keeps its ratings when MDBList sends one field with an unexpected
   type, such as a quoted year. Only that field is left empty.
 - When a batch answer cannot be matched to a requested ID, the titles left
