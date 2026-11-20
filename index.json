@@ -3,7 +3,7 @@
     {
       "manifest": {
         "plugin_id": "bulderi.mdblist-plus",
-        "version": "0.5.2-plus",
+        "version": "1.0.0",
         "silo_api_version": "v1",
         "supported_platforms": [
           {
@@ -134,30 +134,30 @@
         }
       },
       "repo_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist",
-      "checksums_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-plus/checksums.txt",
+      "checksums_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v1.0.0/checksums.txt",
       "binaries": {
         "darwin/arm64": {
-          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-plus/plugin-darwin-arm64",
-          "checksum": "f4ad6e6a0b7e2183485aba3c519a4fbe15ba1d9ddda733200e67f6fb7c8f1ec5"
+          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v1.0.0/plugin-darwin-arm64",
+          "checksum": "50925bed49483e2d1690202625c638058cc7ff1a6df9cafdfded1ee0fbd10066"
         },
         "freebsd/amd64": {
-          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-plus/plugin-freebsd-amd64",
-          "checksum": "88f2bfb8e976cc28780cd751c39cc4cc4cf10fb9e7158131f3a4e0d9a0716425"
+          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v1.0.0/plugin-freebsd-amd64",
+          "checksum": "21e1b3d448e1b53383341a00f1336492b63ae5ec261851118dce7dd9eeb7b524"
         },
         "freebsd/arm64": {
-          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-plus/plugin-freebsd-arm64",
-          "checksum": "155b0df8440c4953f44975e67b21f9aed9dfa63b95c0fea75e44843fdd45189c"
+          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v1.0.0/plugin-freebsd-arm64",
+          "checksum": "a2f7246067f257297e93789f74e7b5332d95f6c6d175e3cb198104c0d8f400a1"
         },
         "linux/amd64": {
-          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-plus/plugin-linux-amd64",
-          "checksum": "cc058ad88eab312b2ee67228ef3656ac1d40618f6d476fa4ce05832f17573488"
+          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v1.0.0/plugin-linux-amd64",
+          "checksum": "2e03649f45593c1647610c867ddd321f2514d93b157a3cd0b486a3b30822edfe"
         },
         "linux/arm64": {
-          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-plus/plugin-linux-arm64",
-          "checksum": "9991c5efe91e508313cb81eca790c5ab7d141ed5bfe519d52d34efbc175bfb3b"
+          "url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v1.0.0/plugin-linux-arm64",
+          "checksum": "b38590991470432de49acd52cdefe93ac97161b6e096417ae3b819e862795a2f"
         }
       },
-      "bundle_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v0.5.2-plus/plugin.sigstore.json"
+      "bundle_url": "https://github.com/bulderi/silo-plugin-metadata-mdblist/releases/download/v1.0.0/plugin.sigstore.json"
     }
   ]
 }
