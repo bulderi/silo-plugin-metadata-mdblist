@@ -3,6 +3,8 @@ package provider
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -48,6 +50,24 @@ type mediaResponse struct {
 	// "no data", never "this title has no ratings".
 	Error    string `json:"error"`
 	Response *bool  `json:"response"`
+}
+
+// decodeMedia decodes one title. A field of an unexpected type is left at its
+// zero value instead of discarding the title: encoding/json still fills every
+// other field and reports only the first mismatch. A body that is not an
+// object at all is still an error.
+func decodeMedia(data []byte, label string) (*mediaResponse, error) {
+	var decoded mediaResponse
+	err := json.Unmarshal(data, &decoded)
+	var typeErr *json.UnmarshalTypeError
+	if errors.As(err, &typeErr) && typeErr.Field != "" {
+		log.Printf("mdblist: %s: ignoring a mistyped field: %v", label, err)
+		return &decoded, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &decoded, nil
 }
 
 // mediaIDs is the response's "ids" object. MDBList types imdb as a string and
