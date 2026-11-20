@@ -169,11 +169,10 @@ func TestConcurrentLookupsShareOneBatchRequest(t *testing.T) {
 			w.WriteHeader(http.StatusTeapot)
 			return
 		}
-		// Answer out of order and include a title nobody asked for, to prove
-		// correlation is by ID rather than by position.
+		// Answer out of order, to prove correlation is by ID rather than by
+		// position.
 		_, _ = io.WriteString(w, "["+
 			movieBody("tt0000003", 3, 3.3)+","+
-			movieBody("tt9999999", 9, 9.9)+","+
 			movieBody("tt0000001", 1, 1.1)+"]")
 	})
 	client := api.client(time.Second)
@@ -207,6 +206,45 @@ func TestConcurrentLookupsShareOneBatchRequest(t *testing.T) {
 	}
 	if answers["tt0000002"] != nil {
 		t.Fatalf("tt0000002 = %+v, want no data: MDBList did not answer it", answers["tt0000002"])
+	}
+}
+
+// TestUnmatchedBatchAnswerFallsBackToSingleLookups: an answer whose ID matches
+// no requested one, such as a merged IMDb ID, may be the answer to any
+// unanswered ID, so those are looked up singly instead of being recorded as
+// unknown titles.
+func TestUnmatchedBatchAnswerFallsBackToSingleLookups(t *testing.T) {
+	t.Parallel()
+
+	api := newScriptedAPI(t, func(w http.ResponseWriter, req recordedRequest) {
+		if req.method == http.MethodGet {
+			if strings.HasSuffix(req.path, "/tt0000002") {
+				_, _ = io.WriteString(w, movieBody("tt0000002", 2, 2.2))
+				return
+			}
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		_, _ = io.WriteString(w, "["+
+			movieBody("tt0000001", 1, 1.1)+","+
+			movieBody("tt9999999", 2, 2.2)+"]")
+	})
+	client := api.client(time.Second)
+
+	answers := fetchAll(t, client, "imdb", "tt0000001", "tt0000002", "tt0000003")
+
+	if got := imdbRating(answers["tt0000001"]); got != 1.1 {
+		t.Fatalf("tt0000001 got rating %v, want 1.1 from the batch", got)
+	}
+	if got := imdbRating(answers["tt0000002"]); got != 2.2 {
+		t.Fatalf("tt0000002 got rating %v, want 2.2 from its single lookup", got)
+	}
+	if answers["tt0000003"] != nil {
+		t.Fatalf("tt0000003 = %+v, want no data: its single lookup found nothing", answers["tt0000003"])
+	}
+	// One batch, then one GET per unanswered ID; the matched one is not asked again.
+	if requests := api.seen(); len(requests) != 3 {
+		t.Fatalf("made %d requests %+v, want the batch and two single lookups", len(requests), requests)
 	}
 }
 

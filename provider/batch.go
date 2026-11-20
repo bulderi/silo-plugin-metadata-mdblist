@@ -164,11 +164,7 @@ func (c *Client) resolve(ctx context.Context, key batchKey, ids []string) (resul
 	answers, outcome, err := c.fetchBatch(ctx, key, ids)
 	switch outcome {
 	case batchAnswered:
-		results = make(map[string]lookupResult, len(answers))
-		for id, response := range answers {
-			results[id] = lookupResult{response: response}
-		}
-		return results, true
+		return answers, true
 	case batchFailed:
 		results = make(map[string]lookupResult, len(ids))
 		for _, id := range ids {
@@ -196,7 +192,7 @@ func (c *Client) resolve(ctx context.Context, key batchKey, ids []string) (resul
 
 // fetchBatch sends one batch request. err is set exactly when the outcome is
 // batchFailed.
-func (c *Client) fetchBatch(ctx context.Context, key batchKey, ids []string) (map[string]*mediaResponse, batchOutcome, error) {
+func (c *Client) fetchBatch(ctx context.Context, key batchKey, ids []string) (map[string]lookupResult, batchOutcome, error) {
 	apiKey, baseURL, _ := c.snapshot()
 	endpoint := fmt.Sprintf("%s/%s/%s/?apikey=%s",
 		baseURL,
@@ -252,22 +248,41 @@ func (c *Client) fetchBatch(ctx context.Context, key batchKey, ids []string) (ma
 		requested[id] = true
 	}
 
-	answers := make(map[string]*mediaResponse, len(ids))
+	answers := make(map[string]lookupResult, len(ids))
+	unmatched := 0
 	for _, element := range elements {
-		var decoded mediaResponse
-		if err := json.Unmarshal(element, &decoded); err != nil {
+		if string(element) == "null" {
+			// A placeholder carries no ID to misplace; its title is unknown.
+			continue
+		}
+		decoded, err := decodeMedia(element, label)
+		if err != nil {
+			unmatched++
 			continue
 		}
 		if decoded.Error != "" || (decoded.Response != nil && !*decoded.Response) {
 			continue
 		}
-		id := answeredID(key, &decoded)
+		id := answeredID(key, decoded)
 		if !requested[id] {
 			// An answer that cannot be tied to a requested ID is dropped:
 			// attaching it by position would risk another title's ratings.
+			unmatched++
 			continue
 		}
-		answers[id] = &decoded
+		answers[id] = lookupResult{response: decoded}
+	}
+
+	if unmatched > 0 {
+		// A dropped answer may belong to any unanswered ID, so those are
+		// asked singly instead of being recorded as unknown titles.
+		log.Printf("mdblist: %d answers to %s matched no requested ID; looking up the unanswered IDs singly", unmatched, label)
+		for _, id := range ids {
+			if _, answered := answers[id]; !answered {
+				response, _, err := c.fetchSingle(ctx, key, id)
+				answers[id] = lookupResult{response: response, err: err}
+			}
+		}
 	}
 	return answers, batchAnswered, nil
 }
