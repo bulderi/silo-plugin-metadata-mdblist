@@ -208,8 +208,8 @@ func (c *Client) fetchSingle(ctx context.Context, key batchKey, mediaID string) 
 		return nil, false, fmt.Errorf("%w: HTTP %d", ErrUnusableAnswer, status)
 	}
 
-	var decoded mediaResponse
-	if err := json.Unmarshal(body, &decoded); err != nil {
+	decoded, err := decodeMedia(body, label)
+	if err != nil {
 		// A shape we do not recognise is a plugin problem to fix, not a
 		// refresh to fail.
 		log.Printf("mdblist: decode %s: %v", label, err)
@@ -223,7 +223,7 @@ func (c *Client) fetchSingle(ctx context.Context, key batchKey, mediaID string) 
 	if decoded.Response != nil && !*decoded.Response {
 		return nil, true, nil
 	}
-	return &decoded, true, nil
+	return decoded, true, nil
 }
 
 // noteInBandError handles an error MDBList sent in a 200 body and returns the

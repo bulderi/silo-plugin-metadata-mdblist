@@ -139,6 +139,7 @@ func TestFetchMediaClassifiesEveryMDBListAnswer(t *testing.T) {
 		{name: "200 with response false", status: http.StatusOK, body: `{"response":false}`},
 		{name: "200 with truncated json", status: http.StatusOK, body: `{"ratings":[`, wantErr: ErrUnusableAnswer},
 		{name: "200 with a non-json body", status: http.StatusOK, body: `<html>nope</html>`, wantErr: ErrUnusableAnswer},
+		{name: "200 with a non-object body", status: http.StatusOK, body: `[]`, wantErr: ErrUnusableAnswer},
 	}
 
 	for _, tt := range tests {
@@ -159,6 +160,26 @@ func TestFetchMediaClassifiesEveryMDBListAnswer(t *testing.T) {
 				t.Fatalf("FetchMedia() = %+v, want no response", response)
 			}
 		})
+	}
+}
+
+// TestFetchMediaKeepsATitleWithAMistypedField: one field of an unexpected type
+// must not cost the title its ratings.
+func TestFetchMediaKeepsATitleWithAMistypedField(t *testing.T) {
+	t.Parallel()
+
+	api := newFakeAPI(t, http.StatusOK, `{"type":"movie","year":"1975","ratings":[{"source":"imdb","value":8.1}]}`)
+	client := api.client("test-key")
+
+	response, err := client.FetchMedia(context.Background(), "imdb", "movie", "tt0073195")
+	if err != nil {
+		t.Fatalf("FetchMedia() returned error: %v", err)
+	}
+	if got := imdbRating(response); got != 8.1 {
+		t.Fatalf("imdb rating = %v, want 8.1", got)
+	}
+	if response.Year != 0 {
+		t.Fatalf("Year = %d, want 0 for the mistyped field", response.Year)
 	}
 }
 
