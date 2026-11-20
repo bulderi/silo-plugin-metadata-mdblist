@@ -8,6 +8,19 @@ only this build's changes; each release is tagged `v<version>`. Changes to the
 official plugin are listed in its
 [releases](https://github.com/Silo-Server/silo-plugin-metadata-mdblist/releases).
 
+## 0.5.2-plus.1 — 2026-11-20
+
+Based on the official 0.5.2.
+
+- A title keeps its ratings when MDBList sends one field with an unexpected
+  type, such as a quoted year. Only that field is left empty.
+- When a batch answer cannot be matched to a requested ID, the titles left
+  unanswered are looked up one by one. Before, Silo recorded them as unknown
+  to MDBList and did not ask again for weeks.
+- A batch size lowered after MDBList refused a batch now resets after a day.
+  Before, a passing refusal could turn batching off until the plugin
+  restarted, which multiplied the requests a library costs.
+
 ## 0.5.2-plus — 2026-11-19
 
 Based on the official 0.5.2.
