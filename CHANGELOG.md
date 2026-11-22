@@ -9,6 +9,18 @@ version plus `-plus` (`-letterboxd` before 0.5.2-plus), then `.1`, `.2` and so
 on for releases with only this build's changes. Changes to the official
 plugin are listed in its [releases](https://github.com/Silo-Server/silo-plugin-metadata-mdblist/releases).
 
+## 1.0.1 — 2026-11-22
+
+Based on the official 0.5.2. The plugin itself is unchanged; this release
+updates the logo CSS in `extras/`.
+
+- The logos show again in current Silo builds. Silo now draws a rating's
+  source name in Medium instead of faded SemiBold, so the CSS stopped
+  matching and the names showed as text. The font is now Plus Jakarta Sans
+  Medium, so marks without a logo keep Silo's weight.
+- Logos sit centred on the score beside them. Before, they drew about a
+  pixel above the digits.
+
 ## 1.0.0 — 2026-11-20
 
 Based on the official 0.5.2.
