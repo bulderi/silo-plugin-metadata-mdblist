@@ -146,7 +146,7 @@ the owners' own sites for personal use; the source files are in
 `extras/logos`.
 
 Silo names a rating's source only in its text, which CSS cannot read but a
-font can. The file's font is Silo's own typeface, Plus Jakarta Sans SemiBold,
+font can. The file's font is Silo's own typeface, Plus Jakarta Sans Medium,
 in which those source names draw as the logos. Only a whole name does, so a
 mark such as "RT Top Critics" keeps its text, and each logo lands on its own
 rating whichever ratings you turn on. Every other mark keeps its text in the
@@ -329,7 +329,7 @@ to run before a pull request.
 `make logos` rebuilds `extras/silo-rating-logos.css` with
 `extras/font/build.py`, which needs Python with fontTools and brotli (Debian:
 `python3-fonttools python3-brotli`). It adds the logos to
-`extras/font/PlusJakartaSans-SemiBold-latin.woff2` (SIL Open Font License,
+`extras/font/PlusJakartaSans-Medium-latin.woff2` (SIL Open Font License,
 `extras/font/OFL.txt`) and keeps only printable ASCII, the characters source
 names use. A new logo is a glyph and a ligature for its source's name there.
 

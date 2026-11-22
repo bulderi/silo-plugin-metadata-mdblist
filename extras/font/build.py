@@ -1,6 +1,6 @@
 """Build extras/silo-rating-logos.css: a rating-logo font and the rules using it.
 
-The font is Plus Jakarta Sans SemiBold, the face Silo draws rating marks in,
+The font is Plus Jakarta Sans Medium, the face Silo draws rating marks in,
 plus colour (COLRv0) logo glyphs that replace rating source names, such as
 "IMDb" and "MAL", through a ligature. Every other mark draws in Silo's
 own letters, so the CSS can give the font to every rating mark without knowing
@@ -9,8 +9,8 @@ its source.
 Requires fontTools and brotli (Debian: python3-fonttools python3-brotli).
 Run from anywhere: python3 extras/font/build.py
 
-PlusJakartaSans-SemiBold-latin.woff2 is @fontsource/plus-jakarta-sans 5.2.5,
-files/plus-jakarta-sans-latin-600-normal.woff2, under the OFL in OFL.txt.
+PlusJakartaSans-Medium-latin.woff2 is @fontsource/plus-jakarta-sans 5.2.5,
+files/plus-jakarta-sans-latin-500-normal.woff2, under the OFL in OFL.txt.
 """
 import base64
 import io
@@ -30,7 +30,7 @@ from fontTools.ttLib import TTFont
 from fontTools.ttLib.tables import otTables
 
 EXTRAS = Path(__file__).resolve().parent.parent
-SOURCE = EXTRAS / "font" / "PlusJakartaSans-SemiBold-latin.woff2"
+SOURCE = EXTRAS / "font" / "PlusJakartaSans-Medium-latin.woff2"
 LOGOS = EXTRAS / "logos"
 OUTPUT = EXTRAS / "silo-rating-logos.css"
 
@@ -43,6 +43,8 @@ HEIGHTS = {"": 10 / 13, ".sm": 8 / 12}
 # Compact icons look small at TMDB's height, so they draw taller, inside the 16.4px and 15.1px lines.
 ICON_HEIGHTS = {"": 14 / 13, ".sm": 11 / 12}
 ICON_MAX_ASPECT = 1.5
+# Mark and score sizes in px: 13 and 15 on title pages, 12 and 14 for small ratings.
+SIZES = {"": (13, 15), ".sm": (12, 14)}
 # Names drawn as a logo and the rest of the name: name -> (the part the logo replaces, logo).
 LABELLED = {"RT Audience": ("RT", "rt"), "MC Users": ("MC", "metacritic")}
 
@@ -65,7 +67,7 @@ CSS = """/*
  *
  * Silo writes each rating's source as plain text (TMDB alone gets its logo).
  * These rules give every rating mark the font below: Plus Jakarta Sans
- * SemiBold, Silo's own face, in which the source names "IMDb", "Letterboxd",
+ * Medium, Silo's own face, in which the source names "IMDb", "Letterboxd",
  * "RT", "Metacritic", "MAL" and "MDBList" are ligatures drawn as the logos.
  * "RT Audience" and "MC Users" draw as the RT and Metacritic logos followed
  * by "Audience" and "Users". A logo replaces only a whole name, so a mark
@@ -103,19 +105,18 @@ CSS = """/*
 @font-face {
   font-family: "Silo Rating Logos";
   src: url("data:font/woff2;base64,FONT_DATA") format("woff2");
-  font-weight: 600;
+  font-weight: 500;
   font-display: block;
 }
 
-span.whitespace-nowrap:has(> span.tabular-nums) > span.font-semibold.opacity-75:first-child {
+span.whitespace-nowrap:has(> span.tabular-nums) > span.tracking-tight:first-child {
   font-family: "Silo Rating Logos", var(--font-body, "Plus Jakarta Sans", sans-serif);
   letter-spacing: normal;
-  opacity: 1;
   color: rgb(from currentColor r g b / 1);
   text-shadow: none;
 }
 
-span.whitespace-nowrap:has(> span.tabular-nums) > span.font-semibold.opacity-75.text-xs:first-child {
+span.whitespace-nowrap:has(> span.tabular-nums) > span.tracking-tight.text-xs:first-child {
   font-feature-settings: "ss01";
 }
 """
@@ -317,8 +318,15 @@ def build_font():
     glyf, hmtx = font["glyf"], font["hmtx"]
     upem = font["head"].unitsPerEm
     os2 = font["OS/2"]
-    # Middle of the content area: where flex centring puts a mark's middle, as TMDB's logo.
-    centre_y = (os2.sTypoAscender + os2.sTypoDescender) / 2
+    def content_middle(px):
+        # Browsers round ascent and descent to whole pixels before placing the baseline.
+        return (round(os2.sTypoAscender * px / upem) + round(os2.sTypoDescender * px / upem)) / 2
+
+    def logo_centre(mark_px, score_px):
+        # Flex centring lines up the content-area middles of mark and score; the logo
+        # goes on the middle of the score's digits instead, which sit lower.
+        digit_drop = content_middle(score_px) - os2.sCapHeight * score_px / upem / 2
+        return (content_middle(mark_px) - digit_drop) * upem / mark_px
     tracking = round(TRACKING_EM * upem)
     for name in font.getGlyphOrder():
         advance, lsb = hmtx[name]
@@ -334,6 +342,7 @@ def build_font():
     for key, (word, box, layers, fallback) in logos().items():
         heights = ICON_HEIGHTS if box[2] / box[3] <= ICON_MAX_ASPECT else HEIGHTS
         for suffix, height_em in heights.items():
+            centre_y = logo_centre(*SIZES[suffix])
             base = f"logo.{key}{suffix}"
             colr[base] = []
             for i, (rgb, draw) in enumerate(layers):
@@ -383,9 +392,9 @@ feature ss01 {{ lookup SMALL; }} ss01;
     for name_id in (1, 3, 4, 6, 16, 17):
         names.removeNames(nameID=name_id)
     names.setName("Silo Rating Logos", 1, 3, 1, 0x409)
-    names.setName("Silo Rating Logos SemiBold", 3, 3, 1, 0x409)
-    names.setName("Silo Rating Logos SemiBold", 4, 3, 1, 0x409)
-    names.setName("SiloRatingLogos-SemiBold", 6, 3, 1, 0x409)
+    names.setName("Silo Rating Logos Medium", 3, 3, 1, 0x409)
+    names.setName("Silo Rating Logos Medium", 4, 3, 1, 0x409)
+    names.setName("SiloRatingLogos-Medium", 6, 3, 1, 0x409)
     names.setName("This Font Software is licensed under the SIL Open Font License, Version 1.1. "
                   "The rating logos are their owners' trademarks.", 13, 3, 1, 0x409)
 
